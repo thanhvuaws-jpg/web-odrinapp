@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập | Royal Restaurant</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Playfair Display cho Tiêu đề sang trọng, Plus Jakarta Sans cho text dễ đọc -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            300: '#F3E5AB',
+                            400: '#D4AF37',
+                            500: '#C5A017',
+                            600: '#AA8811',
+                        },
+                        royal: {
+                            900: '#0a0a0a',
+                            800: '#1a1a1a',
+                        }
+                    },
+                    animation: {
+                        'ken-burns': 'kenBurns 20s ease-in-out infinite alternate',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'shine': 'shine 3s linear infinite',
+                    },
+                    keyframes: {
+                        kenBurns: {
+                            '0%': { transform: 'scale(1) translate(0, 0)' },
+                            '100%': { transform: 'scale(1.1) translate(-1%, -1%)' }
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        shine: {
+                            '0%': { backgroundPosition: '200% center' },
+                            '100%': { backgroundPosition: '-200% center' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* Hình nền nhà hàng sang trọng */
+        .bg-restaurant {
+            background-image: url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Overlay tối màu để text nổi bật */
+        .overlay {
+            background: linear-gradient(135deg, rgba(10, 10, 10, 0.85) 0%, rgba(26, 26, 26, 0.6) 100%);
+        }
+        
+        /* Chế độ sáng (ít dùng cho phong cách luxury nhưng vẫn hỗ trợ) */
+        .light .overlay {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 240, 240, 0.5) 100%);
+        }
+
+        /* Hiệu ứng kính mờ (Glassmorphism) cực mượt */
+        .glass-luxury {
+            background: rgba(20, 20, 20, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.3); /* Viền màu vàng gold mờ */
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .light .glass-luxury {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        /* Input styling */
+        .input-luxury {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .light .input-luxury {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .input-luxury:focus {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: #D4AF37; /* Màu gold */
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+        
+        .light .input-luxury:focus {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Nút button lấp lánh */
+        .btn-gold-shine {
+            background: linear-gradient(
+                90deg, 
+                #AA8811 0%, 
+                #D4AF37 25%, 
+                #F3E5AB 50%, 
+                #D4AF37 75%, 
+                #AA8811 100%
+            );
+            background-size: 200% auto;
+            color: #1a1a1a;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gold-shine:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Staggered animation delays cho các phần tử */
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
+        
+        /* Hiệu ứng hạt bụi (particles) đơn giản bằng CSS */
+        .particles {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(212, 175, 55, 0.4);
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased text-white min-h-screen relative overflow-hidden transition-colors duration-500">
+    
+    <!-- Background Image with Ken Burns Effect -->
+    <div class="absolute inset-0 z-0 bg-restaurant animate-ken-burns"></div>
+    
+    <!-- Gradient Overlay -->
+    <div class="absolute inset-0 z-0 overlay transition-colors duration-500"></div>
+    
+    <!-- Particles Effect -->
+    <div class="particles" id="particles">
+        <!-- Javascript sẽ tạo các hạt bụi ở đây -->
+    </div>
+
+    <!-- Theme Switcher floating top-right -->
+    <div class="absolute top-6 right-6 z-20">
+        <button id="themeToggle" class="w-10 h-10 rounded-full glass-luxury flex items-center justify-center hover:scale-110 transition-transform duration-300 group">
+            <i class="fa-solid fa-moon text-gold-400 text-sm dark:hidden group-hover:rotate-12 transition-transform"></i>
+            <i class="fa-solid fa-sun text-gold-400 text-sm hidden dark:block group-hover:rotate-90 transition-transform"></i>
+        </button>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+        
+        <!-- Glassmorphism Card -->
+        <div class="w-full max-w-md glass-luxury rounded-3xl p-8 sm:p-10 relative overflow-hidden">
+            
+            <!-- Trang trí góc thẻ -->
+            <div class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-gold-400/30 rounded-tl-3xl m-2"></div>
+            <div class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-gold-400/30 rounded-br-3xl m-2"></div>
+
+            <!-- Header / Logo -->
+            <div class="text-center mb-10 opacity-0 animate-fade-in-up">
+                <!-- Vòng sáng phía sau logo -->
+                <div class="relative inline-block mb-4 animate-float">
+                    <div class="absolute inset-0 bg-gold-400 blur-xl opacity-30 rounded-full"></div>
+                    <div class="relative w-20 h-20 rounded-full border-2 border-gold-400 flex items-center justify-center bg-royal-900/50 backdrop-blur-sm">
+                        <i class="fa-solid fa-utensils text-3xl text-gold-400"></i>
+                    </div>
+                </div>
+                
+                <h1 class="font-serif text-3xl sm:text-4xl font-bold tracking-wider mb-2 text-white dark:text-white light:text-royal-900">
+                    ROYAL
+                    <span class="block text-gold-400 text-2xl sm:text-3xl mt-1 font-normal italic">Restaurant</span>
+                </h1>
+                <div class="w-12 h-0.5 bg-gold-400 mx-auto my-4 opacity-50"></div>
+                <p class="text-gray-300 dark:text-gray-300 light:text-gray-600 text-sm font-medium tracking-wide uppercase text-xs">
+                    Staff Portal
+                </p>
+            </div>
+
+            <!-- Form -->
+            <form id="loginForm" class="space-y-6">
+                <!-- Username Input -->
+                <div class="space-y-2 opacity-0 animate-fade-in-up delay-100">
+                    <label for="username" class="block text-xs font-semibold tracking-wider text-gray-300 uppercase">Tên đăng nhập</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gold-400/70 group-focus-within:text-gold-400 transition-colors">
+                            <i class="fa-regular fa-user"></i>
+                        </span>
+                        <input type="text" id="username" required
+                               class="w-full input-luxury rounded-xl py-3.5 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-0 text-sm"
+                               placeholder="Nhập tên đăng nhập...">
+                    </div>
+                </div>
+
+                <!-- Password Input -->
+                <div class="space-y-2 opacity-0 animate-fade-in-up delay-200">
+                    <div class="flex justify-between items-center">
+                        <label for="password" class="block text-xs font-semibold tracking-wider text-gray-300 uppercase">Mật khẩu</label>
+                        <a href="#" class="text-xs text-gold-400 hover:text-gold-300 transition-colors">Quên mật khẩu?</a>
+                    </div>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gold-400/70 group-focus-within:text-gold-400 transition-colors">
+                            <i class="fa-solid fa-key"></i>
+                        </span>
+                        <input type="password" id="password" required
+                               class="w-full input-luxury rounded-xl py-3.5 pl-11 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-0 text-sm"
+                               placeholder="Nhập mật khẩu...">
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-white transition-colors">
+                            <i class="fa-regular fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4 opacity-0 animate-fade-in-up delay-300">
+                    <button type="submit" class="w-full btn-gold-shine animate-shine font-bold py-4 px-6 rounded-xl flex items-center justify-center space-x-2 text-sm tracking-widest uppercase">
+                        <span>Đăng Nhập</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket ml-2"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Footer Info -->
+            <div class="mt-10 text-center opacity-0 animate-fade-in-up delay-400">
+                <p class="text-[10px] text-gray-400/60 uppercase tracking-widest font-serif">
+                    &copy; 2026 Royal Restaurant
+                </p>
+                <p class="text-[10px] text-gray-400/40 mt-1">
+                    Excellence in every detail
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/login.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tạo hiệu ứng hạt bụi (Particles) bay lơ lửng
+            function createParticles() {
+                const container = document.getElementById('particles');
+                const particleCount = 20; // Số lượng hạt
+
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    
+                    // Random kích thước, vị trí và thời gian bay
+                    const size = Math.random() * 4 + 1; // 1px đến 5px
+                    const posX = Math.random() * 100; // 0% đến 100% chiều ngang
+                    const duration = Math.random() * 10 + 10; // 10s đến 20s
+                    const delay = Math.random() * 10; // 0s đến 10s delay
+
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${posX}%`;
+                    particle.style.animationDuration = `${duration}s`;
+                    particle.style.animationDelay = `${delay}s`;
+
+                    container.appendChild(particle);
+                }
+            }
+
+            createParticles();
+        });
+    </script>
+</body>
+</html>

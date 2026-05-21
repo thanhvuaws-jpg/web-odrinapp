@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Hệ Thống | Royal Restaurant</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Playfair Display cho Tiêu đề, Plus Jakarta Sans cho dữ liệu dễ đọc -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            300: '#F3E5AB',
+                            400: '#D4AF37',
+                            500: '#C5A017',
+                            600: '#AA8811',
+                        },
+                        royal: {
+                            900: '#0a0a0a',
+                            800: '#141414',
+                            700: '#1f1f1f',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(15px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Hình nền tổng thể */
+        body {
+            background-image: url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* Lớp phủ background */
+        .bg-overlay {
+            background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(26, 26, 26, 0.85) 100%);
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+        .light .bg-overlay {
+            background: linear-gradient(135deg, rgba(250, 250, 250, 0.9) 0%, rgba(230, 230, 230, 0.8) 100%);
+        }
+
+        /* Hiệu ứng Kính Mờ (Glassmorphism) */
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .light .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        /* Hover Cards */
+        .glass-card-hover:hover {
+            transform: translateY(-3px);
+            border-color: rgba(212, 175, 55, 0.6);
+            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.15);
+        }
+
+        /* Navigation active state */
+        .nav-item-active {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15) 0%, transparent 100%);
+            color: #D4AF37 !important;
+            border-left: 3px solid #D4AF37;
+        }
+
+        /* Table styles */
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+        tbody tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 175, 55, 0.6);
+        }
+        
+        /* Hiệu ứng mượt cho Tab */
+        .tab-content {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+
+        /* Delay utils */
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+</head>
+<body class="font-sans antialiased text-white min-h-screen flex transition-colors duration-500">
+
+    <!-- Lớp phủ Background -->
+    <div class="bg-overlay transition-colors duration-500"></div>
+
+    <!-- Left Sidebar -->
+    <aside class="w-64 flex flex-col h-screen fixed left-0 top-0 z-30 glass-panel border-r-0 border-r border-gold-400/20">
+        <!-- Logo -->
+        <div class="p-6 border-b border-gold-400/10 flex items-center space-x-4 mt-2">
+            <div class="w-12 h-12 rounded-full border border-gold-400 flex items-center justify-center bg-royal-900/50 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gold-400/20 group-hover:bg-gold-400/40 transition-colors"></div>
+                <i class="fa-solid fa-crown text-xl text-gold-400 relative z-10"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-serif font-bold tracking-wider text-white light:text-royal-900">ROYAL</h1>
+                <p class="text-[10px] text-gold-400 uppercase tracking-widest font-medium">Administration</p>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 p-4 space-y-2 mt-4" id="mainNav">
+            <a href="#" id="nav-overview" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium nav-item-active">
+                <i class="fa-solid fa-chart-pie text-lg w-6 text-center"></i>
+                <span class="tracking-wide text-sm">Tổng quan</span>
+            </a>
+            <a href="#" id="nav-menu" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
+                <i class="fa-solid fa-concierge-bell text-lg w-6 text-center"></i>
+                <span class="tracking-wide text-sm">Thực đơn</span>
+            </a>
+            <a href="#" id="nav-staff" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
+                <i class="fa-solid fa-user-tie text-lg w-6 text-center"></i>
+                <span class="tracking-wide text-sm">Nhân viên</span>
+            </a>
+        </nav>
+
+        <!-- Profile / Settings -->
+        <div class="p-5 border-t border-gold-400/10 space-y-5 bg-black/20">
+            <!-- Theme Toggle -->
+            <div class="flex items-center justify-between px-1">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Giao diện</span>
+                <button id="themeToggle" class="w-8 h-8 rounded-full bg-white/5 border border-gold-400/30 text-gold-400 hover:bg-gold-400 hover:text-royal-900 transition-all flex items-center justify-center">
+                    <i class="fa-solid fa-moon text-sm dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-sm hidden dark:block"></i>
+                </button>
+            </div>
+
+            <!-- User Info -->
+            <div class="flex items-center space-x-3 px-1">
+                <div class="w-10 h-10 rounded-full bg-gold-400 flex items-center justify-center text-royal-900 font-bold text-lg shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                    Q
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="adminName" class="text-sm font-bold text-white light:text-royal-900 truncate">Quản lý</p>
+                    <p class="text-[10px] text-green-400 flex items-center mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse-slow"></span> Trực tuyến
+                    </p>
+                </div>
+            </div>
+
+            <!-- Logout -->
+            <button id="logoutBtn" class="w-full py-2.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all font-semibold flex items-center justify-center space-x-2 text-xs uppercase tracking-wider mt-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Right Content Container -->
+    <div class="flex-1 pl-64 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Top Header -->
+        <header class="w-full h-20 px-8 flex items-center justify-between border-b border-gold-400/10 glass-panel !border-x-0 !border-t-0 rounded-none z-20 sticky top-0">
+            <div>
+                <h2 id="pageTitle" class="text-2xl font-serif font-bold text-white light:text-royal-900 tracking-wide">Tổng Quan Thống Kê</h2>
+                <p id="pageSubtitle" class="text-xs text-gray-400 mt-1 uppercase tracking-widest">Báo cáo hiệu suất thời gian thực</p>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <!-- Live Clock -->
+                <div class="text-right">
+                    <div id="liveTime" class="text-xl font-light tracking-widest text-gold-400"><i class="fa-regular fa-clock mr-1"></i>00:00:00</div>
+                </div>
+                <!-- Notifications -->
+                <button class="relative w-10 h-10 rounded-full border border-gold-400/30 flex items-center justify-center text-gold-400 hover:bg-gold-400 hover:text-royal-900 transition-all">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-royal-900 rounded-full"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Pages Container (Scrollable) -->
+        <main class="flex-1 p-8 overflow-y-auto relative z-10" id="mainContent">
+            
+            <!-- SECTION 1: OVERVIEW PAGE -->
+            <div id="tab-overview-content" class="space-y-8 tab-content">
+                <!-- KPI cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    
+                    <!-- Card 1: Revenue -->
+                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="space-y-2 relative z-10">
+                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Doanh thu tháng này</span>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statRevenue">0đ</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 2: Orders -->
+                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden delay-100">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-receipt"></i></div>
+                        <div class="space-y-2 relative z-10">
+                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Đơn hàng hoàn thành</span>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statOrders">0 đơn</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 3: Tables -->
+                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden delay-200">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-chair"></i></div>
+                        <div class="space-y-2 relative z-10">
+                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Bàn đang sử dụng</span>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statTables">0 bàn</h3>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 4: Staff -->
+                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden delay-300">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-users"></i></div>
+                        <div class="space-y-2 relative z-10">
+                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Nhân sự hệ thống</span>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statStaff">0 người</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="glass-panel p-6 rounded-2xl delay-300">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-lg font-serif font-bold text-gold-400">Biểu Đồ Doanh Thu Theo Ngày</h4>
+                    </div>
+                    <div class="h-[350px] w-full relative">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: MENU MANAGEMENT PAGE -->
+            <div id="tab-menu-content" class="hidden grid grid-cols-12 gap-6 h-[calc(100vh-180px)] tab-content">
+                
+                <!-- Left Categories panel (3 cols) -->
+                <div class="col-span-1 md:col-span-3 glass-panel rounded-2xl p-5 flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4 border-b border-gold-400/20 pb-3">
+                        <h4 class="font-serif font-bold text-gold-400 text-lg">Danh Mục</h4>
+                        <button id="btnAddCategory" class="w-8 h-8 rounded-full bg-gold-400/10 border border-gold-400/50 text-gold-400 hover:bg-gold-400 hover:text-royal-900 transition-all flex items-center justify-center shadow-[0_0_10px_rgba(212,175,55,0.2)]">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                        </button>
+                    </div>
+                    <div id="categoriesList" class="flex-1 overflow-y-auto space-y-2 pr-2">
+                        <!-- JS will populate -->
+                    </div>
+                </div>
+
+                <!-- Right Dishes panel (9 cols) -->
+                <div class="col-span-1 md:col-span-9 glass-panel rounded-2xl p-5 flex flex-col h-full">
+                    <div class="flex flex-wrap items-center justify-between mb-4 border-b border-gold-400/20 pb-3 gap-4">
+                        <h4 id="dishSectionTitle" class="font-serif font-bold text-white light:text-royal-900 text-lg">Món Ăn</h4>
+                        
+                        <div class="flex space-x-3">
+                            <button id="btnAddDish" class="py-1.5 px-4 rounded-lg bg-gradient-to-r from-gold-500 to-gold-400 text-royal-900 font-bold hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all text-sm flex items-center space-x-2">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Thêm Món</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Dishes Table -->
+                    <div class="flex-1 overflow-y-auto pr-2 relative">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gold-400/10 sticky top-0 bg-royal-900/90 backdrop-blur-md">
+                                <tr>
+                                    <th scope="col" class="py-3 px-4 rounded-tl-lg">Tên Món Ăn</th>
+                                    <th scope="col" class="py-3 px-4 text-right">Đơn Giá</th>
+                                    <th scope="col" class="py-3 px-4 text-center">Trạng Thái</th>
+                                    <th scope="col" class="py-3 px-4 text-right rounded-tr-lg">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dishesTableBody" class="divide-y divide-gold-400/5">
+                                <!-- JS will populate -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: STAFF ACCOUNTS PAGE -->
+            <div id="tab-staff-content" class="hidden space-y-6 tab-content">
+                <div class="glass-panel rounded-2xl p-6 h-[calc(100vh-180px)] flex flex-col">
+                    
+                    <div class="flex flex-wrap justify-between items-center mb-6 border-b border-gold-400/20 pb-4 gap-4">
+                        <div>
+                            <h3 class="text-xl font-serif font-bold text-gold-400">Quản Lý Tài Khoản Nhân Sự</h3>
+                            <p class="text-xs text-gray-400 mt-1">Hệ thống cấp quyền và quản lý nhân viên</p>
+                        </div>
+                        <button id="btnCreateStaff" class="py-2 px-5 rounded-lg bg-gradient-to-r from-gold-500 to-gold-400 text-royal-900 font-bold hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>Cấp tài khoản mới</span>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto pr-2">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gold-400/10 bg-black/20 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 rounded-tl-lg">Họ và Tên</th>
+                                    <th scope="col" class="px-6 py-3">Tài khoản</th>
+                                    <th scope="col" class="px-6 py-3 text-center">Vai Trò</th>
+                                    <th scope="col" class="px-6 py-3 text-center">Liên hệ</th>
+                                    <th scope="col" class="px-6 py-3 text-right rounded-tr-lg">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody" class="divide-y divide-gold-400/5">
+                                <!-- JS will populate -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
