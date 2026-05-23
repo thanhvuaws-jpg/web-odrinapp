@@ -939,4 +939,273 @@ $(document).ready(function() {
     function formatMoney(amount) {
         return parseInt(amount).toLocaleString('vi-VN') + 'đ';
     }
+
+    // =============================================
+    // 🔔 NOTIFICATION MODULE — Real-time Polling
+    // =============================================
+    let knownOrderIds = new Set(); // Lưu mã đơn đã biết để phát hiện đơn mới
+    let notifList = [];            // Danh sách thông báo hiển thị trong panel
+    let unreadCount = 0;
+    let notifPanelOpen = false;
+
+    // Khởi tạo: Load đơn hôm nay lần đầu (không thông báo, chỉ đánh dấu "đã biết")
+    function initNotifications() {
+        $.ajax({
+            url: CONFIG.BASE_URL + 'api/get_paid_orders.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (!Array.isArray(data)) return;
+                const today = getTodayStr();
+                data.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(today))
+                    .forEach(o => knownOrderIds.add(parseInt(o.MADONDAT)));
+            }
+        });
+    }
+
+    // Polling mỗi 10 giây để kiểm tra đơn mới
+    function pollNotifications() {
+        $.ajax({
+            url: CONFIG.BASE_URL + 'api/get_paid_orders.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (!Array.isArray(data)) return;
+                const today = getTodayStr();
+                const todayOrders = data.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(today));
+
+                // Tìm đơn mới (chưa có trong knownOrderIds)
+                const newOrders = todayOrders.filter(o => !knownOrderIds.has(parseInt(o.MADONDAT)));
+
+                newOrders.forEach(order => {
+                    knownOrderIds.add(parseInt(order.MADONDAT));
+                    addNotification(order);
+                });
+            }
+        });
+    }
+
+    // Thêm 1 thông báo mới vào hệ thống
+    function addNotification(order) {
+        const notif = {
+            id: order.MADONDAT,
+            tenBan: order.TENBAN,
+            tongTien: order.TONGTIEN,
+            nhanVien: order.HOTENNV,
+            phuongThuc: order.PHUONGTHUCTT || 'Tiền mặt',
+            thoiGian: order.NGAYDAT ? order.NGAYDAT.split(' ')[1].substring(0, 5) : '--:--',
+            read: false
+        };
+
+        notifList.unshift(notif); // Thêm vào đầu danh sách
+        unreadCount++;
+
+        updateBadge();
+        renderNotifPanel();
+        showToast(notif);
+    }
+
+    // Cập nhật badge số trên nút chuông
+    function updateBadge() {
+        const badge = $('#notifBadge');
+        if (unreadCount > 0) {
+            badge.text(unreadCount > 99 ? '99+' : unreadCount).removeClass('hidden');
+        } else {
+            badge.addClass('hidden');
+        }
+    }
+
+    // Render danh sách trong dropdown panel
+    function renderNotifPanel() {
+        const container = $('#notifList');
+        if (notifList.length === 0) {
+            container.html(`
+                <div id="notifEmpty" class="flex flex-col items-center justify-center py-8 text-gray-500">
+                    <i class="fa-regular fa-bell-slash text-2xl mb-2 opacity-40"></i>
+                    <p class="text-xs">Chưa có thông báo nào</p>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        notifList.forEach(n => {
+            const isTransfer = n.phuongThuc === 'Chuyển khoản';
+            const readClass = n.read ? 'opacity-60' : '';
+            html += `
+                <div class="notif-item px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer ${readClass}" data-id="${n.id}">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isTransfer ? 'bg-blue-500/20' : 'bg-emerald-500/20'}">
+                            <i class="fa-solid ${isTransfer ? 'fa-qrcode text-blue-400' : 'fa-money-bill-wave text-emerald-400'} text-xs"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs font-bold text-white">${n.tenBan} đã thanh toán</p>
+                                ${!n.read ? '<span class="w-2 h-2 rounded-full bg-gold-400 flex-shrink-0 ml-1"></span>' : ''}
+                            </div>
+                            <p class="text-[11px] text-gold-400 font-black mt-0.5">${parseInt(n.tongTien).toLocaleString('vi-VN')}đ</p>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <span class="text-[10px] text-gray-500">${n.thoiGian}</span>
+                                <span class="text-[10px] text-gray-600">•</span>
+                                <span class="text-[10px] text-gray-500">${n.nhanVien}</span>
+                                <span class="text-[10px] text-gray-600">•</span>
+                                <span class="text-[10px] ${isTransfer ? 'text-blue-400' : 'text-emerald-400'}">${n.phuongThuc}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        container.html(html);
+
+        // Bấm vào thông báo → xem chi tiết
+        $('.notif-item').click(function() {
+            const id = $(this).data('id');
+            const notif = notifList.find(n => n.id == id);
+            if (!notif) return;
+
+            // Đánh dấu đã đọc
+            if (!notif.read) {
+                notif.read = true;
+                unreadCount = Math.max(0, unreadCount - 1);
+                updateBadge();
+                renderNotifPanel();
+            }
+
+            // Hiện chi tiết đơn
+            Swal.fire({
+                title: `<span style="color:#d4af37">🧾 Chi tiết ${notif.tenBan}</span>`,
+                html: `
+                    <div style="text-align:left; color:#e2e8f0; line-height:2">
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+                            <span style="color:#94a3b8;font-size:13px">Mã đơn</span>
+                            <span style="font-weight:bold;font-family:monospace">#${notif.id}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+                            <span style="color:#94a3b8;font-size:13px">Bàn</span>
+                            <span style="font-weight:bold">${notif.tenBan}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+                            <span style="color:#94a3b8;font-size:13px">Nhân viên</span>
+                            <span>${notif.nhanVien}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+                            <span style="color:#94a3b8;font-size:13px">Thời gian</span>
+                            <span>${notif.thoiGian}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+                            <span style="color:#94a3b8;font-size:13px">Phương thức</span>
+                            <span style="color:${notif.phuongThuc === 'Chuyển khoản' ? '#60a5fa' : '#34d399'}">${notif.phuongThuc}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:12px 0 4px">
+                            <span style="color:#94a3b8;font-size:13px;font-weight:bold">TỔNG THANH TOÁN</span>
+                            <span style="font-size:20px;font-weight:900;color:#d4af37">${parseInt(notif.tongTien).toLocaleString('vi-VN')}đ</span>
+                        </div>
+                    </div>
+                `,
+                background: '#0f172a',
+                color: '#e2e8f0',
+                confirmButtonColor: '#d4af37',
+                confirmButtonText: 'Đóng',
+                showClass: { popup: 'animate__animated animate__fadeInDown animate__faster' }
+            });
+        });
+    }
+
+    // Hiện Toast notification góc phải màn hình
+    function showToast(notif) {
+        const isTransfer = notif.phuongThuc === 'Chuyển khoản';
+        const toast = $(`
+            <div class="toast-notif pointer-events-auto flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-2xl text-white cursor-pointer"
+                 style="background:rgba(15,23,42,0.95);border:1px solid rgba(212,175,55,0.4);backdrop-filter:blur(16px);
+                        animation:slideInRight 0.4s ease forwards;min-width:280px;max-width:320px;">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isTransfer ? 'bg-blue-500/20' : 'bg-emerald-500/20'}">
+                    <i class="fa-solid fa-cash-register ${isTransfer ? 'text-blue-400' : 'text-emerald-400'}"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-white">${notif.tenBan} vừa thanh toán xong!</p>
+                    <p class="text-sm font-black text-gold-400 mt-0.5">${parseInt(notif.tongTien).toLocaleString('vi-VN')}đ</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">${notif.phuongThuc} · ${notif.nhanVien}</p>
+                </div>
+                <i class="fa-solid fa-xmark text-gray-500 hover:text-white text-xs flex-shrink-0 toast-close"></i>
+            </div>
+        `);
+
+        $('#toastContainer').append(toast);
+
+        // Bấm X để đóng sớm
+        toast.find('.toast-close').click(function(e) {
+            e.stopPropagation();
+            toast.fadeOut(300, () => toast.remove());
+        });
+
+        // Bấm toast để xem chi tiết và mở panel
+        toast.click(function() {
+            toast.fadeOut(300, () => toast.remove());
+            openNotifPanel();
+        });
+
+        // Tự đóng sau 5 giây
+        setTimeout(() => {
+            toast.fadeOut(400, () => toast.remove());
+        }, 5000);
+    }
+
+    // Helper: lấy chuỗi ngày hôm nay dạng YYYY-MM-DD
+    function getTodayStr() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    }
+
+    // Mở/Đóng notification panel
+    function openNotifPanel() {
+        $('#notifPanel').removeClass('hidden');
+        notifPanelOpen = true;
+    }
+    function closeNotifPanel() {
+        $('#notifPanel').addClass('hidden');
+        notifPanelOpen = false;
+    }
+
+    // Toggle panel khi bấm chuông
+    $('#notifBtn').click(function(e) {
+        e.stopPropagation();
+        if (notifPanelOpen) {
+            closeNotifPanel();
+        } else {
+            openNotifPanel();
+        }
+    });
+
+    // Đóng panel khi bấm ra ngoài
+    $(document).click(function(e) {
+        if (notifPanelOpen && !$(e.target).closest('#notifPanel, #notifBtn').length) {
+            closeNotifPanel();
+        }
+    });
+
+    // Xoá tất cả thông báo
+    $('#notifMarkAllRead').click(function(e) {
+        e.stopPropagation();
+        notifList = [];
+        unreadCount = 0;
+        updateBadge();
+        renderNotifPanel();
+    });
+
+    // Thêm CSS animation cho toast vào DOM
+    $('<style>')
+        .text(`
+            @keyframes slideInRight {
+                from { opacity: 0; transform: translateX(100px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+        `)
+        .appendTo('head');
+
+    // Khởi động hệ thống thông báo
+    initNotifications();
+    setInterval(pollNotifications, 10000);
+
 });
+

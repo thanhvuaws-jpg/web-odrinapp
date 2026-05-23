@@ -449,6 +449,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // ===== Button Event Listeners =====
+    // Play / Pause
+    btnPlay.addEventListener("click", togglePlay);
+
+    // Previous track
+    btnPrev.addEventListener("click", prevTrack);
+
+    // Next track
+    btnNext.addEventListener("click", nextTrack);
+
     // Seek track progress
     trackerProgress.addEventListener("input", () => {
         if (playMode === "youtube") {
