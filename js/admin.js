@@ -941,7 +941,7 @@ $(document).ready(function() {
     }
 
     // =============================================
-    // 🔔 NOTIFICATION MODULE — Real-time Polling
+    // 🔔 NOTIFICATION MODULE — WebSocket (Socket.io)
     // =============================================
     let knownOrderIds = new Set(); // Lưu mã đơn đã biết để phát hiện đơn mới
     let notifList = [];            // Danh sách thông báo hiển thị trong panel
@@ -959,29 +959,44 @@ $(document).ready(function() {
                 const today = getTodayStr();
                 data.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(today))
                     .forEach(o => knownOrderIds.add(parseInt(o.MADONDAT)));
+
+                // Khởi động kết nối WebSocket để nhận đơn real-time
+                initWebSocket();
             }
         });
     }
 
-    // Polling mỗi 10 giây để kiểm tra đơn mới
-    function pollNotifications() {
-        $.ajax({
-            url: CONFIG.BASE_URL + 'api/get_paid_orders.php',
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                if (!Array.isArray(data)) return;
-                const today = getTodayStr();
-                const todayOrders = data.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(today));
+    // Kết nối WebSocket Socket.io
+    function initWebSocket() {
+        let socketUrl = window.location.origin;
+        // Nếu mở file local dạng file:// hoặc local IP, trỏ trực tiếp về Host Apache port 80 của VPS
+        if (window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+            socketUrl = 'http://103.157.204.120';
+        }
+        
+        console.log('Connecting to WebSocket at:', socketUrl);
+        const socket = io(socketUrl, {
+            path: '/socket.io/'
+        });
 
-                // Tìm đơn mới (chưa có trong knownOrderIds)
-                const newOrders = todayOrders.filter(o => !knownOrderIds.has(parseInt(o.MADONDAT)));
+        socket.on('connect', () => {
+            console.log('🔌 WebSocket connected!');
+            socket.emit('join_admin'); // Join vào room admin nhận đơn
+        });
 
-                newOrders.forEach(order => {
-                    knownOrderIds.add(parseInt(order.MADONDAT));
+        socket.on('new_order_paid', (orders) => {
+            if (!Array.isArray(orders)) return;
+            orders.forEach(order => {
+                const orderId = parseInt(order.MADONDAT);
+                if (!knownOrderIds.has(orderId)) {
+                    knownOrderIds.add(orderId);
                     addNotification(order);
-                });
-            }
+                }
+            });
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ WebSocket disconnected. Auto-reconnecting...');
         });
     }
 
@@ -1205,7 +1220,6 @@ $(document).ready(function() {
 
     // Khởi động hệ thống thông báo
     initNotifications();
-    setInterval(pollNotifications, 10000);
 
 });
 

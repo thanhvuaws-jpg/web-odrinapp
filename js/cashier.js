@@ -161,7 +161,34 @@ $(document).ready(function() {
         }
     }
     fetchOrders();
-    pollInterval = setInterval(fetchOrders, 5000);
+
+    // Kết nối WebSocket Socket.io thay thế Polling
+    function initWebSocket() {
+        let socketUrl = window.location.origin;
+        if (window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+            socketUrl = 'http://103.157.204.120';
+        }
+        
+        console.log('Connecting to WebSocket at:', socketUrl);
+        const socket = io(socketUrl, {
+            path: '/socket.io/'
+        });
+
+        socket.on('connect', () => {
+            console.log('🔌 Cashier WebSocket connected!');
+            socket.emit('join_cashier'); // Đăng ký vào room thu ngân
+        });
+
+        socket.on('refresh_orders', () => {
+            console.log('📢 Refreshing order list via WebSocket');
+            fetchOrders();
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ Cashier WebSocket disconnected. Auto-reconnecting...');
+        });
+    }
+    initWebSocket();
 
     // Tính tổng tiền mặt, chuyển khoản và tổng cộng trong ngày
     function calculateHistorySums() {
