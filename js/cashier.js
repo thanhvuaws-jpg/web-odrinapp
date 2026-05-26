@@ -165,7 +165,7 @@ $(document).ready(function() {
 
     // Kết nối WebSocket Socket.io thay thế Polling
     function initWebSocket() {
-        let socketUrl = window.location.origin;
+        let socketUrl = window.location.origin.replace(":8081", "");
         if (window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
             socketUrl = 'http://103.157.204.120';
         }
