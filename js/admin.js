@@ -44,6 +44,7 @@ $(document).ready(function() {
 
     $("#adminName").text(hoten);
 
+    let socket = null;
     let sessionCheckInterval = null;
     let revenueChart = null;
     let activeTab = 'overview';
@@ -418,6 +419,11 @@ $(document).ready(function() {
                             color: getSwalColor()
                         });
                         loadDishes(selectedCategory.MALOAI); // Reload lại nếu lỗi
+                    } else {
+                        // Trạng thái cập nhật thành công -> Phát tín hiệu Socket
+                        if (socket && socket.connected) {
+                            socket.emit('refresh_orders');
+                        }
                     }
                 }
             });
@@ -503,6 +509,9 @@ $(document).ready(function() {
                         if (res.status === "success") {
                             Swal.fire({ icon: 'success', title: 'Thành công!', timer: 1500, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
                             loadCategories();
+                            if (socket && socket.connected) {
+                                socket.emit('refresh_orders');
+                            }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message, background: getSwalBg(), color: getSwalColor() });
                         }
@@ -536,6 +545,9 @@ $(document).ready(function() {
                             Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1200, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
                             selectedCategory = null;
                             loadCategories();
+                            if (socket && socket.connected) {
+                                socket.emit('refresh_orders');
+                            }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message, background: getSwalBg(), color: getSwalColor() });
                         }
@@ -622,6 +634,9 @@ $(document).ready(function() {
                         if (res.status === "success") {
                             Swal.fire({ icon: 'success', title: 'Thành công!', timer: 1500, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
                             loadDishes(selectedCategory.MALOAI);
+                            if (socket && socket.connected) {
+                                socket.emit('refresh_orders');
+                            }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message, background: getSwalBg(), color: getSwalColor() });
                         }
@@ -654,6 +669,9 @@ $(document).ready(function() {
                         if (res.status === "success") {
                             Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1200, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
                             loadDishes(selectedCategory.MALOAI);
+                            if (socket && socket.connected) {
+                                socket.emit('refresh_orders');
+                            }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message, background: getSwalBg(), color: getSwalColor() });
                         }
@@ -975,7 +993,7 @@ $(document).ready(function() {
         }
         
         console.log('Connecting to WebSocket at:', socketUrl);
-        const socket = io(socketUrl, {
+        socket = io(socketUrl, {
             path: '/socket.io/'
         });
 
