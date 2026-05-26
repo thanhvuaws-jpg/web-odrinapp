@@ -39,6 +39,7 @@ $(document).ready(function() {
     let selectedOrderDetails = [];
     let pollInterval = null;
     let sessionCheckInterval = null;
+    let socket = null;
 
     // Helper kiểm tra màn hình tối để tạo popup đẹp phù hợp
     function getSwalBg() {
@@ -170,7 +171,7 @@ $(document).ready(function() {
         }
         
         console.log('Connecting to WebSocket at:', socketUrl);
-        const socket = io(socketUrl, {
+        socket = io(socketUrl, {
             path: '/socket.io/'
         });
 
@@ -396,6 +397,10 @@ $(document).ready(function() {
                     success: function(response) {
                         Swal.close();
                         if (response.status === "success") {
+                            if (socket && socket.connected) {
+                                socket.emit('refresh_orders');
+                                socket.emit('booking_status_updated');
+                            }
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Thanh toán thành công!',
@@ -487,6 +492,10 @@ $(document).ready(function() {
                     dataType: "json",
                     success: function(response) {
                         if (response.status === "success") {
+                            if (socket && socket.connected) {
+                                socket.emit('refresh_orders');
+                                socket.emit('booking_status_updated');
+                            }
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Đã hủy đơn hàng',

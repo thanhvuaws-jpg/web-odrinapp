@@ -63,7 +63,6 @@
         @media (max-width: 1023px) {
             body { overflow: auto; }
         }
-        }
 
         /* Scrollbar styling */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -432,6 +431,7 @@
         let selectedOrderDetails = [];
         let selectedPaymentMethod = 'cash'; // 'cash' hoặc 'transfer'
         let lastRenderKey = '';
+        let socket = null;
 
         // Check Login Session
         const manv = localStorage.getItem("manv");
@@ -458,6 +458,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             startClock();
             switchTab('pending');
+            
+            // Initialize WebSocket
+            initWebSocket();
             
             // Poll for changes every 5 seconds safely without screen flicker
             setInterval(() => fetchOrders(false), 5000);
@@ -877,6 +880,12 @@
                         success: function(res) {
                             Swal.close();
                             if (res.status === "success") {
+                                // Emit WebSocket events to update staff and database states in real-time
+                                if (socket && socket.connected) {
+                                    socket.emit('refresh_orders');
+                                    socket.emit('booking_status_updated');
+                                }
+
                                 // Show success popup and offer printing choice
                                 Swal.fire({
                                     title: 'Thanh toán thành công!',
@@ -966,6 +975,33 @@
 
             // Trigger print
             window.print();
+        }
+
+        // --- WEBSOCKET CONNECTION ---
+        function initWebSocket() {
+            let socketUrl = window.location.origin;
+            if (window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+                socketUrl = 'http://103.157.204.120';
+            }
+            
+            console.log('Connecting to WebSocket at:', socketUrl);
+            socket = io(socketUrl, {
+                path: '/socket.io/'
+            });
+
+            socket.on('connect', () => {
+                console.log('🔌 Cashier WebSocket connected!');
+                socket.emit('join_cashier'); // Đăng ký vào room thu ngân
+            });
+
+            socket.on('refresh_orders', () => {
+                console.log('📢 Refreshing order list via WebSocket');
+                fetchOrders(false);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('❌ Cashier WebSocket disconnected. Auto-reconnecting...');
+            });
         }
     </script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
