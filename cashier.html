@@ -711,7 +711,7 @@
             const currentRenderKey = currentTab + '_' + bookingSubTab + '_' + searchQuery + '_' + activeList.map(o => {
                 const id = currentTab === 'booking' ? o.MADATBAN : o.MADONDAT;
                 const isSelected = selectedOrder && (currentTab === 'booking' ? selectedOrder.MADATBAN === id : selectedOrder.MADONDAT === id);
-                return `${id}-${o.TONGTIEN}-${isSelected}-${o.PHUONGTHUCTT}`;
+                return `${id}-${o.TONGTIEN}-${isSelected}-${o.PHUONGTHUCTT}-${o.TINHTRANG || ''}`;
             }).join(',');
 
             // If list content is identical to last render, skip DOM updates (prevents flickering)
@@ -1205,7 +1205,7 @@
 
             socket.on('booking_status_updated', () => {
                 console.log('📅 Booking status updated via WebSocket');
-                fetchOrders(false);
+                fetchOrders(true); // Force re-render with animation
             });
 
             socket.on('disconnect', () => {
