@@ -208,16 +208,21 @@
             <!-- Custom Tab Selector -->
             <div class="glass-panel p-1.5 rounded-2xl flex relative overflow-hidden shrink-0">
                 <!-- Active Tab Indicator (Sliding background) -->
-                <div id="tabIndicator" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-white/10 border border-white/10 rounded-xl transition-all duration-300 ease-out z-0"></div>
+                <div id="tabIndicator" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(33.33%-6px)] bg-white/10 border border-white/10 rounded-xl transition-all duration-300 ease-out z-0"></div>
                 
                 <button id="tabPending" class="relative z-10 flex-1 py-3 text-center text-white font-bold text-sm transition-colors duration-300 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-bell"></i>
-                    <span>Chờ thanh toán</span>
+                    <span class="hidden sm:inline">Chờ thanh toán</span>
                     <span id="badgePending" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1 animate-pulse">0</span>
                 </button>
                 <button id="tabHistory" class="relative z-10 flex-1 py-3 text-center text-slate-400 font-medium text-sm transition-colors duration-300 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>Lịch sử hôm nay</span>
+                    <span class="hidden sm:inline">Lịch sử</span>
+                </button>
+                <button id="tabBooking" class="relative z-10 flex-1 py-3 text-center text-slate-400 font-medium text-sm transition-colors duration-300 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span class="hidden sm:inline">Đặt trước</span>
+                    <span id="badgeBooking" class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1 hidden">0</span>
                 </button>
             </div>
 
@@ -377,6 +382,15 @@
                             </div>
                         </div>
 
+                        <!-- Action Area Booking -->
+                        <div id="actionAreaBooking" class="hidden">
+                            <button onclick="notifyStaff()" class="w-full relative group overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-[1px]">
+                                <span class="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-all duration-300"></span>
+                                <div class="relative h-full w-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl py-3 flex items-center justify-center font-black text-white text-lg tracking-wide shadow-[0_0_20px_rgba(59,130,246,0.3)] group-hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] transition-all">
+                                    <i class="fa-solid fa-bell-concierge mr-2"></i> Nhắc Nhân Viên Chuẩn Bị Bàn
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -426,7 +440,8 @@
         // State variables
         let pendingOrders = [];
         let completedOrders = [];
-        let currentTab = 'pending'; // 'pending' hoặc 'completed'
+        let bookingOrders = [];
+        let currentTab = 'pending'; // 'pending', 'completed' hoặc 'booking'
         let selectedOrder = null;
         let selectedOrderDetails = [];
         let selectedPaymentMethod = 'cash'; // 'cash' hoặc 'transfer'
@@ -451,6 +466,7 @@
         const elDetailsContent = document.getElementById('detailsContent');
         const elTabPending = document.getElementById('tabPending');
         const elTabHistory = document.getElementById('tabHistory');
+        const elTabBooking = document.getElementById('tabBooking');
         const elTabIndicator = document.getElementById('tabIndicator');
         const elSearch = document.getElementById('searchInput');
 
@@ -535,6 +551,7 @@
         // --- UI ACTIONS ---
         elTabPending.addEventListener('click', () => switchTab('pending'));
         elTabHistory.addEventListener('click', () => switchTab('completed'));
+        elTabBooking.addEventListener('click', () => switchTab('booking'));
 
         function switchTab(tab) {
             currentTab = tab;
@@ -546,13 +563,21 @@
                 elTabIndicator.style.transform = 'translateX(0)';
                 elTabPending.classList.replace('text-slate-400', 'text-white');
                 elTabHistory.classList.replace('text-white', 'text-slate-400');
+                elTabBooking.classList.replace('text-white', 'text-slate-400');
                 document.getElementById('historyStatsPanel').classList.add('hidden');
-            } else {
+            } else if (tab === 'completed') {
                 elTabIndicator.style.transform = 'translateX(100%)';
                 elTabHistory.classList.replace('text-slate-400', 'text-white');
                 elTabPending.classList.replace('text-white', 'text-slate-400');
+                elTabBooking.classList.replace('text-white', 'text-slate-400');
                 document.getElementById('historyStatsPanel').classList.remove('hidden');
                 document.getElementById('historyStatsPanel').classList.add('grid');
+            } else {
+                elTabIndicator.style.transform = 'translateX(200%)';
+                elTabBooking.classList.replace('text-slate-400', 'text-white');
+                elTabPending.classList.replace('text-white', 'text-slate-400');
+                elTabHistory.classList.replace('text-white', 'text-slate-400');
+                document.getElementById('historyStatsPanel').classList.add('hidden');
             }
             
             elSearch.value = ''; // clear search
@@ -577,6 +602,22 @@
                         // Nếu ở tab chờ thanh toán, render luôn
                         renderList(elSearch.value, forceAnimate);
                         refreshSelectedOrderDetails();
+                    } else if (currentTab === 'booking') {
+                        // Nếu ở tab Đặt trước
+                        $.ajax({
+                            url: CONFIG.BASE_URL + "api/get_bookings.php",
+                            type: "GET",
+                            dataType: "json",
+                            success: function(bookingData) {
+                                if (bookingData.status !== "error") {
+                                    bookingOrders = bookingData;
+                                    document.getElementById('badgeBooking').textContent = bookingOrders.length;
+                                    document.getElementById('badgeBooking').classList.remove('hidden');
+                                    renderList(elSearch.value, forceAnimate);
+                                    refreshSelectedOrderDetails();
+                                }
+                            }
+                        });
                     } else {
                         // Nếu ở tab lịch sử, fetch thêm cả lịch sử đã thanh toán để render
                         $.ajax({
@@ -592,7 +633,7 @@
                                     const todayStr = `${year}-${month}-${day}`;
 
                                     completedOrders = paidData.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(todayStr));
-                                    updateStats();
+                                    if(typeof updateStats === 'function') updateStats();
                                     renderList(elSearch.value, forceAnimate);
                                     refreshSelectedOrderDetails();
                                 }
@@ -604,17 +645,21 @@
         }
 
         function renderList(searchQuery = '', forceAnimate = false) {
-            let activeList = currentTab === 'pending' ? pendingOrders : completedOrders;
+            let activeList = [];
+            if (currentTab === 'pending') activeList = pendingOrders;
+            else if (currentTab === 'completed') activeList = completedOrders;
+            else activeList = bookingOrders;
             
             if(searchQuery) {
                 const q = searchQuery.toLowerCase();
-                activeList = activeList.filter(o => o.TENBAN.toLowerCase().includes(q) || o.MADONDAT.toString().includes(q));
+                activeList = activeList.filter(o => o.TENBAN.toLowerCase().includes(q) || (o.MADONDAT && o.MADONDAT.toString().includes(q)) || (o.MADATBAN && o.MADATBAN.toString().includes(q)));
             }
 
             // Generate state key representation
             const currentRenderKey = currentTab + '_' + searchQuery + '_' + activeList.map(o => {
-                const isSelected = selectedOrder && selectedOrder.MADONDAT === o.MADONDAT;
-                return `${o.MADONDAT}-${o.TONGTIEN}-${isSelected}-${o.PHUONGTHUCTT}`;
+                const id = currentTab === 'booking' ? o.MADATBAN : o.MADONDAT;
+                const isSelected = selectedOrder && (currentTab === 'booking' ? selectedOrder.MADATBAN === id : selectedOrder.MADONDAT === id);
+                return `${id}-${o.TONGTIEN}-${isSelected}-${o.PHUONGTHUCTT}`;
             }).join(',');
 
             // If list content is identical to last render, skip DOM updates (prevents flickering)
@@ -629,18 +674,24 @@
                 elListContainer.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-10 text-slate-500 animate-fade-in-up">
                         <i class="fa-solid fa-inbox text-3xl mb-2 opacity-50"></i>
-                        <p>Không có đơn hàng nào.</p>
+                        <p>Không có ${currentTab === 'booking' ? 'khách đặt trước' : 'đơn hàng nào'}.</p>
                     </div>`;
                 return;
             }
 
             activeList.forEach((order, index) => {
-                const isSelected = selectedOrder && selectedOrder.MADONDAT === order.MADONDAT;
+                const id = currentTab === 'booking' ? order.MADATBAN : order.MADONDAT;
+                const isSelected = selectedOrder && (currentTab === 'booking' ? selectedOrder.MADATBAN === id : selectedOrder.MADONDAT === id);
                 
                 // Icon based on status/time
-                let iconHtml = currentTab === 'pending' 
-                    ? `<div class="w-10 h-10 rounded-full bg-royal-gold/10 text-royal-gold flex items-center justify-center"><i class="fa-solid fa-utensils"></i></div>`
-                    : `<div class="w-10 h-10 rounded-full ${order.PHUONGTHUCTT === 'Chuyển khoản' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'} flex items-center justify-center"><i class="fa-solid fa-check"></i></div>`;
+                let iconHtml = '';
+                if (currentTab === 'pending') {
+                    iconHtml = `<div class="w-10 h-10 rounded-full bg-royal-gold/10 text-royal-gold flex items-center justify-center"><i class="fa-solid fa-utensils"></i></div>`;
+                } else if (currentTab === 'booking') {
+                    iconHtml = `<div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div>`;
+                } else {
+                    iconHtml = `<div class="w-10 h-10 rounded-full ${order.PHUONGTHUCTT === 'Chuyển khoản' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'} flex items-center justify-center"><i class="fa-solid fa-check"></i></div>`;
+                }
 
                 const card = document.createElement('div');
                 card.className = `order-card glass-panel rounded-2xl p-4 cursor-pointer flex items-center justify-between mb-3 stagger-item ${isSelected ? 'active' : ''}`;
@@ -651,7 +702,7 @@
                     card.style.opacity = '1';
                 }
                 
-                const timeStr = order.NGAYDAT.split(' ')[1].substring(0, 5); // HH:MM
+                const timeStr = currentTab === 'booking' ? (order.THOIGIANHEN ? order.THOIGIANHEN.split(' ')[1].substring(0, 5) : 'N/A') : (order.NGAYDAT ? order.NGAYDAT.split(' ')[1].substring(0, 5) : 'N/A');
                 
                 card.innerHTML = `
                     <div class="flex items-center space-x-4">
@@ -659,26 +710,26 @@
                         <div>
                             <h4 class="text-white font-bold text-base leading-tight">${order.TENBAN}</h4>
                             <div class="text-xs text-slate-400 mt-1 flex items-center space-x-2">
-                                <span>#${order.MADONDAT}</span>
+                                <span>#${id}</span>
                                 <span>•</span>
                                 <span><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>
                             </div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-royal-gold font-black text-lg">${formatCurrency(order.TONGTIEN)}</div>
-                        <div class="text-[10px] text-slate-550 uppercase">Phục vụ: ${order.HOTENNV}</div>
+                        <div class="text-royal-gold font-black text-lg">${formatCurrency(order.TONGTIEN || 0)}</div>
+                        <div class="text-[10px] text-slate-550 uppercase">${currentTab === 'booking' ? 'Trạng thái: ' + order.TINHTRANG : 'Phục vụ: ' + order.HOTENNV}</div>
                     </div>
                 `;
                 
-                card.onclick = () => selectOrder(order.MADONDAT);
+                card.onclick = () => selectOrder(id);
                 elListContainer.appendChild(card);
             });
         }
 
         function selectOrder(id) {
-            const list = currentTab === 'pending' ? pendingOrders : completedOrders;
-            selectedOrder = list.find(o => o.MADONDAT == id);
+            const list = currentTab === 'pending' ? pendingOrders : (currentTab === 'completed' ? completedOrders : bookingOrders);
+            selectedOrder = list.find(o => (currentTab === 'booking' ? o.MADATBAN : o.MADONDAT) == id);
             
             // Re-render list to show active state
             renderList(elSearch.value, false);
@@ -703,8 +754,9 @@
             if (!selectedOrder) return;
             
             // Check if the selected order still exists in the database/active lists
-            const list = currentTab === 'pending' ? pendingOrders : completedOrders;
-            const updated = list.find(o => o.MADONDAT == selectedOrder.MADONDAT);
+            const list = currentTab === 'pending' ? pendingOrders : (currentTab === 'completed' ? completedOrders : bookingOrders);
+            const idField = currentTab === 'booking' ? 'MADATBAN' : 'MADONDAT';
+            const updated = list.find(o => o[idField] == selectedOrder[idField]);
             
             if (!updated) {
                 // Đơn hàng đã biến mất khỏi danh sách chờ (hoặc đã chuyển trạng thái) -> ẩn bảng chi tiết
@@ -716,6 +768,33 @@
             // Cập nhật lại đối tượng selectedOrder
             selectedOrder = updated;
             
+            // Cập nhật thông tin bàn và mã đơn
+            document.getElementById('detailTableName').textContent = selectedOrder.TENBAN;
+            document.getElementById('detailOrderId').textContent = selectedOrder[idField];
+            
+            const timeStr = currentTab === 'booking' ? (selectedOrder.THOIGIANHEN ? selectedOrder.THOIGIANHEN.split(' ')[1].substring(0, 5) : 'N/A') : (selectedOrder.NGAYDAT ? selectedOrder.NGAYDAT.split(' ')[1].substring(0, 5) : 'N/A');
+            document.getElementById('detailTime').textContent = timeStr;
+            
+            const badge = document.getElementById('detailStatusBadge');
+            const reqBadge = document.getElementById('customerPaymentRequest');
+            
+            if (currentTab === 'booking') {
+                badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider animate-pulse';
+                badge.textContent = selectedOrder.TINHTRANG || 'Khách đặt trước';
+                document.getElementById('actionAreaPending').classList.add('hidden');
+                document.getElementById('actionAreaCompleted').classList.add('hidden');
+                document.getElementById('actionAreaBooking').classList.remove('hidden');
+                reqBadge.classList.add('hidden');
+
+                // Clear items vì đặt trước có thể không có món ăn
+                document.getElementById('detailItemsBody').innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Khách đặt trước (chưa gọi món)</td></tr>';
+                document.getElementById('detailSubtotal').textContent = formatCurrency(0);
+                document.getElementById('detailGrandTotal').textContent = formatCurrency(selectedOrder.TONGTIEN || 0);
+                return;
+            } else {
+                document.getElementById('actionAreaBooking').classList.add('hidden');
+            }
+            
             // Load lại danh sách món ăn mới nhất từ DB của đơn hàng này
             $.ajax({
                 url: CONFIG.BASE_URL + "api/get_order_details.php",
@@ -724,16 +803,6 @@
                 dataType: "json",
                 success: function(items) {
                     selectedOrderDetails = items;
-                    
-                    // Cập nhật thông tin bàn và mã đơn
-                    document.getElementById('detailTableName').textContent = selectedOrder.TENBAN;
-                    document.getElementById('detailOrderId').textContent = selectedOrder.MADONDAT;
-                    
-                    const timeStr = selectedOrder.NGAYDAT.split(' ')[1].substring(0, 5); // HH:MM
-                    document.getElementById('detailTime').textContent = timeStr;
-                    
-                    const badge = document.getElementById('detailStatusBadge');
-                    const reqBadge = document.getElementById('customerPaymentRequest');
                     
                     if(selectedOrder.TINHTRANG !== 'true') {
                         badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider animate-pulse';
@@ -803,6 +872,38 @@
             const detailSection = document.getElementById('detailSection');
             detailSection.classList.remove('translate-y-0');
             detailSection.classList.add('translate-y-full');
+        }
+
+        function notifyStaff() {
+            if (!selectedOrder) return;
+            Swal.fire({
+                title: 'Nhắc nhân viên?',
+                text: `Bạn muốn gửi thông báo nhắc nhân viên chuẩn bị bàn ${selectedOrder.TENBAN} cho khách đặt trước?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3b82f6',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Gửi thông báo',
+                cancelButtonText: 'Hủy',
+                background: '#1e293b',
+                color: '#fff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (socket && socket.connected) {
+                        socket.emit('booking_status_updated');
+                        socket.emit('notify_prepare_table', selectedOrder.TENBAN);
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã gửi thông báo!',
+                        text: `Nhân viên sẽ nhận được thông báo chuẩn bị bàn ${selectedOrder.TENBAN}.`,
+                        timer: 2000,
+                        background: '#1e293b',
+                        color: '#fff',
+                        showConfirmButton: false
+                    });
+                }
+            });
         }
 
         // Animate counting numbers
