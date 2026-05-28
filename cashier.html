@@ -597,6 +597,7 @@
             $.ajax({
                 url: CONFIG.BASE_URL + "api/get_pending_orders.php",
                 type: "GET",
+                cache: false,
                 dataType: "json",
                 success: function(pendingData) {
                     if (pendingData.status !== "error") {
@@ -614,6 +615,7 @@
             $.ajax({
                 url: CONFIG.BASE_URL + "api/get_bookings.php",
                 type: "GET",
+                cache: false,
                 dataType: "json",
                 success: function(bookingData) {
                     if (bookingData.status !== "error") {
@@ -644,6 +646,7 @@
                 $.ajax({
                     url: CONFIG.BASE_URL + "api/get_paid_orders.php",
                     type: "GET",
+                    cache: false,
                     dataType: "json",
                     success: function(paidData) {
                         if (paidData.status !== "error") {
@@ -842,6 +845,7 @@
                 $.ajax({
                     url: CONFIG.BASE_URL + "api/get_booking_details.php",
                     type: "GET",
+                    cache: false,
                     data: { madatban: selectedOrder.MADATBAN },
                     dataType: "json",
                     success: function(res) {
@@ -889,6 +893,7 @@
             $.ajax({
                 url: CONFIG.BASE_URL + "api/get_order_details.php",
                 type: "GET",
+                cache: false,
                 data: { madondat: selectedOrder.MADONDAT },
                 dataType: "json",
                 success: function(items) {
@@ -979,12 +984,9 @@
                 color: '#fff'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Lưu thông báo vào server để Android app có thể đọc được
-                    $.post(CONFIG.BASE_URL + "api/booking_alert.php", { tenban: selectedOrder.TENBAN }, function() {
-                        if (socket && socket.connected) {
-                            socket.emit('booking_status_updated'); // Báo cho Android biết có cập nhật
-                        }
-                    });
+                    if (socket && socket.connected) {
+                        socket.emit('booking_status_updated'); // Báo cho Android biết có cập nhật
+                    }
                     
                     Swal.fire({
                         icon: 'success',
