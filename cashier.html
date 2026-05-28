@@ -979,10 +979,13 @@
                 color: '#fff'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    if (socket && socket.connected) {
-                        socket.emit('booking_status_updated');
-                        socket.emit('notify_prepare_table', selectedOrder.TENBAN);
-                    }
+                    // Lưu thông báo vào server để Android app có thể đọc được
+                    $.post(CONFIG.BASE_URL + "api/booking_alert.php", { tenban: selectedOrder.TENBAN }, function() {
+                        if (socket && socket.connected) {
+                            socket.emit('booking_status_updated'); // Báo cho Android biết có cập nhật
+                        }
+                    });
+                    
                     Swal.fire({
                         icon: 'success',
                         title: 'Đã gửi thông báo!',
