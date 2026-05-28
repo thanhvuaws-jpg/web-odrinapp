@@ -637,6 +637,14 @@
                     if (currentTab === 'booking') {
                         renderList(elSearch.value, forceAnimate);
                         refreshSelectedOrderDetails();
+                    } else if (selectedOrder && currentTab !== 'booking') {
+                        // Nếu đang chọn 1 booking ở panel chi tiết dù đang ở tab khác
+                        // thì cập nhật lại status trong selectedOrder từ bookingOrders mới
+                        const updatedBooking = bookingOrders.find(o => o.MADATBAN === selectedOrder.MADATBAN);
+                        if (updatedBooking) {
+                            selectedOrder = updatedBooking;
+                            refreshSelectedOrderDetails();
+                        }
                     }
                 }
             });
@@ -1192,6 +1200,11 @@
 
             socket.on('refresh_orders', () => {
                 console.log('📢 Refreshing order list via WebSocket');
+                fetchOrders(false);
+            });
+
+            socket.on('booking_status_updated', () => {
+                console.log('📅 Booking status updated via WebSocket');
                 fetchOrders(false);
             });
 
