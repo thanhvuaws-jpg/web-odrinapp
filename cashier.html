@@ -483,9 +483,6 @@
             
             // Initialize WebSocket
             initWebSocket();
-            
-            // Poll for changes every 5 seconds safely without screen flicker
-            setInterval(() => fetchOrders(false), 5000);
 
             // Bind search
             elSearch.addEventListener('input', (e) => renderList(e.target.value));
@@ -837,10 +834,51 @@
                 document.getElementById('actionAreaCompleted').classList.add('hidden');
                 reqBadge.classList.add('hidden');
 
-                // Clear items vì đặt trước có thể không có món ăn
-                document.getElementById('detailItemsBody').innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Khách đặt trước (chưa gọi món)</td></tr>';
                 document.getElementById('detailSubtotal').textContent = formatCurrency(0);
                 document.getElementById('detailGrandTotal').textContent = formatCurrency(selectedOrder.TONGTIEN || 0);
+
+                // Load chi tiết món ăn của khách đặt trước
+                $.ajax({
+                    url: CONFIG.BASE_URL + "api/get_booking_details.php",
+                    type: "GET",
+                    data: { madatban: selectedOrder.MADATBAN },
+                    dataType: "json",
+                    success: function(res) {
+                        const tbody = document.getElementById('detailItemsBody');
+                        tbody.innerHTML = '';
+                        selectedOrderDetails = res || [];
+
+                        if (selectedOrderDetails.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Khách đặt bàn (chưa gọi món)</td></tr>';
+                            return;
+                        }
+
+                        let total = 0;
+                        selectedOrderDetails.forEach((item, index) => {
+                            const price = parseFloat(item.GIATIEN) || 0;
+                            const qty = parseInt(item.SOLUONG) || 0;
+                            const lineTotal = price * qty;
+                            total += lineTotal;
+                            
+                            tbody.innerHTML += `
+                                <tr class="group hover:bg-white/5 transition-colors">
+                                    <td class="py-3 px-2 text-sm text-white">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-6 h-6 rounded bg-slate-800 flex items-center justify-center text-xs text-slate-400 group-hover:bg-royal-gold/20 group-hover:text-royal-gold transition-colors">${index + 1}</div>
+                                            <span class="font-medium">${item.TENMON}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2 text-center text-sm font-bold text-white">${qty}</td>
+                                    <td class="py-3 px-2 text-right text-sm text-slate-300">${formatCurrency(price)}</td>
+                                    <td class="py-3 px-2 text-right text-sm font-bold text-royal-gold">${formatCurrency(lineTotal)}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        document.getElementById('detailSubtotal').textContent = formatCurrency(total);
+                        document.getElementById('detailGrandTotal').textContent = formatCurrency(total);
+                    }
+                });
                 return;
             } else {
                 document.getElementById('actionAreaBooking').classList.add('hidden');
