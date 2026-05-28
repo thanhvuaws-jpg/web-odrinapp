@@ -52,6 +52,7 @@ $(document).ready(function() {
     let selectedCategory = null;
     let dishes = [];
     let staffs = [];
+    let selectedStaffFilter = 'staff';
 
     // 2. Chạy đồng hồ thời gian thực
     function updateClock() {
@@ -108,6 +109,20 @@ $(document).ready(function() {
     $("#nav-staff").click(function(e) {
         e.preventDefault();
         switchTab('staff', 'Quản Lý Nhân Viên', 'Phân quyền, quản lý tài khoản nhân sự hoạt động');
+    });
+
+    $("#tabFilterStaff").click(function() {
+        selectedStaffFilter = 'staff';
+        $(this).removeClass("border-transparent text-gray-400 hover:text-white").addClass("border-gold-400 text-gold-400");
+        $("#tabFilterCustomer").removeClass("border-gold-400 text-gold-400").addClass("border-transparent text-gray-400 hover:text-white");
+        renderStaffs();
+    });
+
+    $("#tabFilterCustomer").click(function() {
+        selectedStaffFilter = 'customer';
+        $(this).removeClass("border-transparent text-gray-400 hover:text-white").addClass("border-gold-400 text-gold-400");
+        $("#tabFilterStaff").removeClass("border-gold-400 text-gold-400").addClass("border-transparent text-gray-400 hover:text-white");
+        renderStaffs();
     });
 
     function switchTab(tab, title, subtitle) {
@@ -695,29 +710,44 @@ $(document).ready(function() {
     }
 
     function renderStaffs() {
-        if (staffs.length === 0) {
+        const filteredStaffs = staffs.filter(s => {
+            if (selectedStaffFilter === 'staff') {
+                return s.MAQUYEN != 4;
+            } else {
+                return s.MAQUYEN == 4;
+            }
+        });
+
+        if (filteredStaffs.length === 0) {
+            const emptyMsg = selectedStaffFilter === 'staff' 
+                ? 'Chưa có tài khoản nhân viên nào' 
+                : 'Chưa có tài khoản khách hàng nào';
             $("#staffTableBody").html(`
                 <tr>
-                    <td colspan="5" class="py-6 text-center text-slate-550">Chưa có tài khoản nhân viên nào</td>
+                    <td colspan="5" class="py-6 text-center text-slate-550">${emptyMsg}</td>
                 </tr>
             `);
             return;
         }
 
         let html = '';
-        staffs.forEach(s => {
+        filteredStaffs.forEach(s => {
             const roleColor = s.MAQUYEN == 1 
                 ? 'text-red-500 dark:text-red-400 bg-red-500/10 border-red-500/20' 
                 : (s.MAQUYEN == 3 
                     ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
-                    : 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20');
+                    : (s.MAQUYEN == 4
+                        ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
+                        : 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20'));
+            
+            const roleName = s.MAQUYEN == 4 ? 'Khách hàng' : s.TENQUYEN;
             
             html += `
                 <tr class="border-b border-slate-100 dark:border-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
                     <td class="px-6 py-4 font-bold text-slate-800 dark:text-white text-sm">${s.HOTENNV}</td>
                     <td class="px-6 py-4 text-slate-500 dark:text-slate-400 font-medium text-xs">${s.TENDN}</td>
                     <td class="px-6 py-4">
-                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${roleColor}">${s.TENQUYEN}</span>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${roleColor}">${roleName}</span>
                     </td>
                     <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium text-xs">
                         <div><i class="fa-solid fa-phone mr-1.5 text-slate-400"></i>${s.SDT || 'Chưa cập nhật'}</div>
@@ -805,6 +835,7 @@ $(document).ready(function() {
                             <option value="1" ${qVal == 1 ? 'selected' : ''}>Quản lý (Admin)</option>
                             <option value="2" ${qVal == 2 ? 'selected' : ''}>Nhân viên phục vụ</option>
                             <option value="3" ${qVal == 3 ? 'selected' : ''}>Thu ngân (Cashier)</option>
+                            <option value="4" ${qVal == 4 ? 'selected' : ''}>Khách hàng (Customer)</option>
                         </select>
                     </div>
                 </div>
