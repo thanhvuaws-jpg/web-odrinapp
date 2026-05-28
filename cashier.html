@@ -603,63 +603,64 @@
                         pendingOrders = pendingData;
                         document.getElementById('badgePending').textContent = pendingOrders.length;
                     }
-                    
                     if (currentTab === 'pending') {
-                        // Nếu ở tab chờ thanh toán, render luôn
                         renderList(elSearch.value, forceAnimate);
                         refreshSelectedOrderDetails();
-                    } else if (currentTab === 'booking') {
-                        // Nếu ở tab Đặt trước
-                        $.ajax({
-                            url: CONFIG.BASE_URL + "api/get_bookings.php",
-                            type: "GET",
-                            dataType: "json",
-                            success: function(bookingData) {
-                                if (bookingData.status !== "error") {
-                                    bookingOrders = bookingData;
-                                    // Đếm số đơn đang chờ
-                                    const activeCount = bookingOrders.filter(o => {
-                                        const t = (o.TINHTRANG || '').toLowerCase();
-                                        return t !== 'completed' && t !== 'đã kết thúc' && t !== 'đã hủy';
-                                    }).length;
-                                    
-                                    const badge = document.getElementById('badgeBooking');
-                                    badge.textContent = activeCount;
-                                    if (activeCount > 0) {
-                                        badge.classList.remove('hidden');
-                                    } else {
-                                        badge.classList.add('hidden');
-                                    }
-                                    
-                                    renderList(elSearch.value, forceAnimate);
-                                    refreshSelectedOrderDetails();
-                                }
-                            }
-                        });
-                    } else {
-                        // Nếu ở tab lịch sử, fetch thêm cả lịch sử đã thanh toán để render
-                        $.ajax({
-                            url: CONFIG.BASE_URL + "api/get_paid_orders.php",
-                            type: "GET",
-                            dataType: "json",
-                            success: function(paidData) {
-                                if (paidData.status !== "error") {
-                                    const localDate = new Date();
-                                    const year = localDate.getFullYear();
-                                    const month = String(localDate.getMonth() + 1).padStart(2, '0');
-                                    const day = String(localDate.getDate()).padStart(2, '0');
-                                    const todayStr = `${year}-${month}-${day}`;
-
-                                    completedOrders = paidData.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(todayStr));
-                                    if(typeof updateStats === 'function') updateStats();
-                                    renderList(elSearch.value, forceAnimate);
-                                    refreshSelectedOrderDetails();
-                                }
-                            }
-                        });
                     }
                 }
             });
+
+            // Luôn fetch danh sách đặt trước để cập nhật badgeBooking
+            $.ajax({
+                url: CONFIG.BASE_URL + "api/get_bookings.php",
+                type: "GET",
+                dataType: "json",
+                success: function(bookingData) {
+                    if (bookingData.status !== "error") {
+                        bookingOrders = bookingData;
+                        // Đếm số đơn đang chờ
+                        const activeCount = bookingOrders.filter(o => {
+                            const t = (o.TINHTRANG || '').toLowerCase();
+                            return t !== 'completed' && t !== 'đã kết thúc' && t !== 'đã hủy';
+                        }).length;
+                        
+                        const badge = document.getElementById('badgeBooking');
+                        badge.textContent = activeCount;
+                        if (activeCount > 0) {
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                    if (currentTab === 'booking') {
+                        renderList(elSearch.value, forceAnimate);
+                        refreshSelectedOrderDetails();
+                    }
+                }
+            });
+
+            if (currentTab === 'completed') {
+                // Nếu ở tab lịch sử, fetch thêm cả lịch sử đã thanh toán để render
+                $.ajax({
+                    url: CONFIG.BASE_URL + "api/get_paid_orders.php",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(paidData) {
+                        if (paidData.status !== "error") {
+                            const localDate = new Date();
+                            const year = localDate.getFullYear();
+                            const month = String(localDate.getMonth() + 1).padStart(2, '0');
+                            const day = String(localDate.getDate()).padStart(2, '0');
+                            const todayStr = `${year}-${month}-${day}`;
+
+                            completedOrders = paidData.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(todayStr));
+                            if(typeof updateStats === 'function') updateStats();
+                        }
+                        renderList(elSearch.value, forceAnimate);
+                        refreshSelectedOrderDetails();
+                    }
+                });
+            }
         }
 
         document.getElementById('subTabActive').addEventListener('click', () => {
