@@ -244,13 +244,18 @@
                     </div>
                 </div>
 
-                <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-royal-gold transition-colors">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
-                    <input type="text" id="searchInput" 
-                           class="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-royal-gold/50 focus:ring-1 focus:ring-royal-gold/50 transition-all text-sm"
-                           placeholder="Tìm kiếm theo mã đơn hoặc tên bàn...">
+                <!-- Search Area -->
+                <div class="p-4 border-b border-white/5 bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+                    <div class="relative w-full">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchInput" class="w-full bg-slate-800/50 border border-slate-700/50 text-white rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-royal-gold/50 focus:ring-1 focus:ring-royal-gold/50 transition-all placeholder:text-slate-500" placeholder="Tìm kiếm theo mã đơn hoặc tên bàn...">
+                    </div>
+                </div>
+
+                <!-- Sub tabs cho Đặt trước -->
+                <div id="bookingSubTabs" class="hidden px-4 py-2 border-b border-white/5 bg-slate-900/80 flex items-center space-x-2 shrink-0">
+                    <button id="subTabActive" class="px-4 py-1.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-colors">Đang chờ</button>
+                    <button id="subTabCompleted" class="px-4 py-1.5 rounded-full text-xs font-bold bg-transparent text-slate-500 border border-slate-700/50 hover:text-slate-300 transition-colors">Lịch sử (Đã xong / Hủy)</button>
                 </div>
             </div>
 
@@ -442,6 +447,7 @@
         let completedOrders = [];
         let bookingOrders = [];
         let currentTab = 'pending'; // 'pending', 'completed' hoặc 'booking'
+        let bookingSubTab = 'active'; // 'active' hoặc 'completed'
         let selectedOrder = null;
         let selectedOrderDetails = [];
         let selectedPaymentMethod = 'cash'; // 'cash' hoặc 'transfer'
@@ -565,6 +571,7 @@
                 elTabHistory.classList.replace('text-white', 'text-slate-400');
                 elTabBooking.classList.replace('text-white', 'text-slate-400');
                 document.getElementById('historyStatsPanel').classList.add('hidden');
+                document.getElementById('bookingSubTabs').classList.add('hidden');
             } else if (tab === 'completed') {
                 elTabIndicator.style.transform = 'translateX(100%)';
                 elTabHistory.classList.replace('text-slate-400', 'text-white');
@@ -572,12 +579,14 @@
                 elTabBooking.classList.replace('text-white', 'text-slate-400');
                 document.getElementById('historyStatsPanel').classList.remove('hidden');
                 document.getElementById('historyStatsPanel').classList.add('grid');
+                document.getElementById('bookingSubTabs').classList.add('hidden');
             } else {
                 elTabIndicator.style.transform = 'translateX(200%)';
                 elTabBooking.classList.replace('text-slate-400', 'text-white');
                 elTabPending.classList.replace('text-white', 'text-slate-400');
                 elTabHistory.classList.replace('text-white', 'text-slate-400');
                 document.getElementById('historyStatsPanel').classList.add('hidden');
+                document.getElementById('bookingSubTabs').classList.remove('hidden');
             }
             
             elSearch.value = ''; // clear search
@@ -611,8 +620,20 @@
                             success: function(bookingData) {
                                 if (bookingData.status !== "error") {
                                     bookingOrders = bookingData;
-                                    document.getElementById('badgeBooking').textContent = bookingOrders.length;
-                                    document.getElementById('badgeBooking').classList.remove('hidden');
+                                    // Đếm số đơn đang chờ
+                                    const activeCount = bookingOrders.filter(o => {
+                                        const t = (o.TINHTRANG || '').toLowerCase();
+                                        return t !== 'completed' && t !== 'đã kết thúc' && t !== 'đã hủy';
+                                    }).length;
+                                    
+                                    const badge = document.getElementById('badgeBooking');
+                                    badge.textContent = activeCount;
+                                    if (activeCount > 0) {
+                                        badge.classList.remove('hidden');
+                                    } else {
+                                        badge.classList.add('hidden');
+                                    }
+                                    
                                     renderList(elSearch.value, forceAnimate);
                                     refreshSelectedOrderDetails();
                                 }
@@ -644,11 +665,33 @@
             });
         }
 
+        document.getElementById('subTabActive').addEventListener('click', () => {
+            bookingSubTab = 'active';
+            document.getElementById('subTabActive').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-colors';
+            document.getElementById('subTabCompleted').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-transparent text-slate-500 border border-slate-700/50 hover:text-slate-300 transition-colors';
+            renderList(elSearch.value, true);
+        });
+
+        document.getElementById('subTabCompleted').addEventListener('click', () => {
+            bookingSubTab = 'completed';
+            document.getElementById('subTabCompleted').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-colors';
+            document.getElementById('subTabActive').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-transparent text-slate-500 border border-slate-700/50 hover:text-slate-300 transition-colors';
+            renderList(elSearch.value, true);
+        });
+
         function renderList(searchQuery = '', forceAnimate = false) {
             let activeList = [];
-            if (currentTab === 'pending') activeList = pendingOrders;
-            else if (currentTab === 'completed') activeList = completedOrders;
-            else activeList = bookingOrders;
+            if (currentTab === 'pending') {
+                activeList = pendingOrders;
+            } else if (currentTab === 'completed') {
+                activeList = completedOrders;
+            } else {
+                activeList = bookingOrders.filter(o => {
+                    const t = (o.TINHTRANG || '').toLowerCase();
+                    const isCompleted = (t === 'completed' || t === 'đã kết thúc' || t === 'đã hủy');
+                    return bookingSubTab === 'active' ? !isCompleted : isCompleted;
+                });
+            }
             
             if(searchQuery) {
                 const q = searchQuery.toLowerCase();
@@ -656,7 +699,7 @@
             }
 
             // Generate state key representation
-            const currentRenderKey = currentTab + '_' + searchQuery + '_' + activeList.map(o => {
+            const currentRenderKey = currentTab + '_' + bookingSubTab + '_' + searchQuery + '_' + activeList.map(o => {
                 const id = currentTab === 'booking' ? o.MADATBAN : o.MADONDAT;
                 const isSelected = selectedOrder && (currentTab === 'booking' ? selectedOrder.MADATBAN === id : selectedOrder.MADONDAT === id);
                 return `${id}-${o.TONGTIEN}-${isSelected}-${o.PHUONGTHUCTT}`;
@@ -779,11 +822,19 @@
             const reqBadge = document.getElementById('customerPaymentRequest');
             
             if (currentTab === 'booking') {
-                badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider animate-pulse';
+                const isCompleted = (selectedOrder.TINHTRANG || '').toLowerCase() === 'completed' || (selectedOrder.TINHTRANG || '').toLowerCase() === 'đã kết thúc' || (selectedOrder.TINHTRANG || '').toLowerCase() === 'đã hủy';
+                
+                if (isCompleted) {
+                    badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-slate-500/20 text-slate-400 border border-slate-500/30 uppercase tracking-wider';
+                    document.getElementById('actionAreaBooking').classList.add('hidden');
+                } else {
+                    badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider animate-pulse';
+                    document.getElementById('actionAreaBooking').classList.remove('hidden');
+                }
                 badge.textContent = selectedOrder.TINHTRANG || 'Khách đặt trước';
+                
                 document.getElementById('actionAreaPending').classList.add('hidden');
                 document.getElementById('actionAreaCompleted').classList.add('hidden');
-                document.getElementById('actionAreaBooking').classList.remove('hidden');
                 reqBadge.classList.add('hidden');
 
                 // Clear items vì đặt trước có thể không có món ăn
