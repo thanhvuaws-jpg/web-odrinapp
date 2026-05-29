@@ -992,14 +992,20 @@
                 color: '#fff'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // [NEW]
                     if (socket && socket.connected) {
-                        socket.emit('booking_status_updated'); // Báo cho Android biết có cập nhật
+                        const tenban = selectedOrder.TENBAN;
+                        const makh = selectedOrder.MAKH ? parseInt(selectedOrder.MAKH) : 0;
+                        socket.emit('notify_prepare_table', {
+                            tenban: tenban,
+                            makh: makh
+                        });
                     }
                     
                     Swal.fire({
                         icon: 'success',
-                        title: 'Đã gửi thông báo!',
-                        text: `Nhân viên sẽ nhận được thông báo chuẩn bị bàn ${selectedOrder.TENBAN}.`,
+                        title: '✅ Đã nhắc nhở!',
+                        text: 'Đã gửi thông báo tới nhân viên chuẩn bị bàn.',
                         timer: 2000,
                         background: '#1e293b',
                         color: '#fff',
