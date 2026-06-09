@@ -438,6 +438,7 @@ $(document).ready(function() {
                         // Trạng thái cập nhật thành công -> Phát tín hiệu Socket
                         if (socket && socket.connected) {
                             socket.emit('refresh_orders');
+                            socket.emit('menu_changed');
                         }
                     }
                 }
@@ -526,6 +527,7 @@ $(document).ready(function() {
                             loadCategories();
                             if (socket && socket.connected) {
                                 socket.emit('refresh_orders');
+                                socket.emit('menu_changed');
                             }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message, background: getSwalBg(), color: getSwalColor() });
@@ -562,6 +564,7 @@ $(document).ready(function() {
                             loadCategories();
                             if (socket && socket.connected) {
                                 socket.emit('refresh_orders');
+                                socket.emit('menu_changed');
                             }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message, background: getSwalBg(), color: getSwalColor() });
@@ -651,6 +654,7 @@ $(document).ready(function() {
                             loadDishes(selectedCategory.MALOAI);
                             if (socket && socket.connected) {
                                 socket.emit('refresh_orders');
+                                socket.emit('menu_changed');
                             }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message, background: getSwalBg(), color: getSwalColor() });
@@ -686,6 +690,7 @@ $(document).ready(function() {
                             loadDishes(selectedCategory.MALOAI);
                             if (socket && socket.connected) {
                                 socket.emit('refresh_orders');
+                                socket.emit('menu_changed');
                             }
                         } else {
                             Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message, background: getSwalBg(), color: getSwalColor() });
