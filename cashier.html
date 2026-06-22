@@ -941,7 +941,7 @@
                     tbody.innerHTML = '';
                     items.forEach((item) => {
                         const tr = document.createElement('tr');
-                        const imgUrl = item.HINHANH ? CONFIG.BASE_URL + item.HINHANH : 'images/default_dish.png';
+                        const imgUrl = item.HINHANH ? (item.HINHANH.startsWith('http') ? item.HINHANH : CONFIG.BASE_URL + item.HINHANH) : 'images/default_dish.png';
                         
                         tr.innerHTML = `
                             <td class="py-3">

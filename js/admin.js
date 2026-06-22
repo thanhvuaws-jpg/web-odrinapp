@@ -306,7 +306,7 @@ $(document).ready(function() {
         let html = '';
         categories.forEach(c => {
             const isSelected = selectedCategory && selectedCategory.MALOAI === c.MALOAI;
-            const imgUrl = c.HINHANH ? CONFIG.BASE_URL + c.HINHANH : 'https://placehold.co/80x80?text=Menu';
+            const imgUrl = c.HINHANH ? (c.HINHANH.startsWith('http') ? c.HINHANH : CONFIG.BASE_URL + c.HINHANH) : 'https://placehold.co/80x80?text=Menu';
             
             html += `
                 <div data-id="${c.MALOAI}" 
@@ -384,7 +384,7 @@ $(document).ready(function() {
 
         let html = '';
         dishes.forEach(d => {
-            const imgUrl = d.HINHANH ? CONFIG.BASE_URL + d.HINHANH : 'https://placehold.co/100x100?text=Food';
+            const imgUrl = d.HINHANH ? (d.HINHANH.startsWith('http') ? d.HINHANH : CONFIG.BASE_URL + d.HINHANH) : 'https://placehold.co/100x100?text=Food';
             const isChecked = d.TINHTRANG === 'true' ? 'checked' : '';
             
             html += `

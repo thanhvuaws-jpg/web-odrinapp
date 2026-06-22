@@ -333,7 +333,7 @@ $(document).ready(function() {
 
         let html = '';
         items.forEach(it => {
-            const imgUrl = it.HINHANH ? CONFIG.BASE_URL + it.HINHANH : 'images/default_dish.png';
+            const imgUrl = it.HINHANH ? (it.HINHANH.startsWith('http') ? it.HINHANH : CONFIG.BASE_URL + it.HINHANH) : 'images/default_dish.png';
             html += `
                 <tr class="border-b border-slate-100 dark:border-slate-900/60 hover:bg-slate-100/40 dark:hover:bg-slate-900/20 transition-colors">
                     <td class="py-3 flex items-center space-x-3">
