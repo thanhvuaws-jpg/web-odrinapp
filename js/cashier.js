@@ -1,3 +1,31 @@
+/* =====================================================================
+ * !! TỆP NÀY KHÔNG ĐƯỢC SỬ DỤNG — KHÔNG TRANG NÀO NẠP NÓ !!
+ * =====================================================================
+ *
+ * Kiểm chứng ngày 11/09/2026:
+ *     grep -rn "cashier.js" *.html   ->  không có kết quả nào
+ *
+ * Logic thu ngân đang chạy thật nằm trong thẻ <script> nội tuyến của
+ * cashier.html (khoảng 800 dòng, bắt đầu ở dòng 493). Tệp này là một bản
+ * song song cũ hơn, 554 dòng, chưa bao giờ được thực thi.
+ *
+ * VÌ SAO ĐIỀU NÀY TỪNG GÂY NHẦM LẪN
+ * ---------------------------------
+ * Ở lần khảo sát đầu tiên tôi đã phân tích chính tệp này và thấy nó CÓ
+ * gọi fetchOrders() lúc tải trang, nên kết luận phía thu ngân đã có cơ
+ * chế khôi phục danh sách đơn. Kết luận đó dựa trên mã không hề chạy.
+ * Nguyên nhân thật của lỗi kẹt đơn nằm ở chỗ khác hoàn toàn (xem QĐ-013).
+ *
+ * KHÁC BIỆT ĐÁNG LƯU Ý so với bản đang chạy: tệp này CHƯA có các bản vá
+ * của đợt nâng cấp — vẫn trỏ socket về IP VPS đã hủy, vẫn thiếu hàm
+ * layGioPhut() chống lỗi tách chuỗi thời gian.
+ *
+ * ĐỀ XUẤT: xóa hẳn. Giữ lại hai bản logic song song cho cùng một màn hình
+ * là cách chắc chắn để lần sau lại có người sửa nhầm tệp. Tôi không tự
+ * xóa vì đó là quyết định của chủ dự án; tệp vẫn nằm trong lịch sử git
+ * nên xóa đi vẫn khôi phục được.
+ * ===================================================================== */
+
 $(document).ready(function() {
     // Theme Switcher Logic
     let currentTheme = localStorage.getItem("theme") || "dark";
