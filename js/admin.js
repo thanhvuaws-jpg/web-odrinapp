@@ -1,4 +1,24 @@
 $(document).ready(function() {
+    initGoldParticles();
+
+    function initGoldParticles() {
+        const container = document.getElementById('goldParticles');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement('div');
+            p.className = 'gold-particle';
+            const size = Math.random() * 4 + 2;
+            p.style.width = `${size}px`;
+            p.style.height = `${size}px`;
+            p.style.left = `${Math.random() * 100}%`;
+            p.style.animationDuration = `${Math.random() * 15 + 10}s`;
+            p.style.animationDelay = `${Math.random() * 15}s`;
+            p.style.opacity = Math.random() * 0.7 + 0.3;
+            container.appendChild(p);
+        }
+    }
+
     // Theme Switcher Logic
     let currentTheme = localStorage.getItem("theme") || "dark";
     applyTheme(currentTheme);
@@ -50,9 +70,6 @@ $(document).ready(function() {
     let activeTab = 'overview';
     let categories = [];
     let selectedCategory = null;
-    let dishes = [];
-    let staffs = [];
-    let selectedStaffFilter = 'staff';
 
     // 2. Chạy đồng hồ thời gian thực
     function updateClock() {
@@ -111,21 +128,44 @@ $(document).ready(function() {
         switchTab('staff', 'Quản Lý Nhân Viên', 'Phân quyền, quản lý tài khoản nhân sự hoạt động');
     });
 
-    $("#tabFilterStaff").click(function() {
-        selectedStaffFilter = 'staff';
-        $(this).removeClass("border-transparent text-gray-400 hover:text-white").addClass("border-gold-400 text-gold-400");
-        $("#tabFilterCustomer").removeClass("border-gold-400 text-gold-400").addClass("border-transparent text-gray-400 hover:text-white");
-        renderStaffs();
+    $("#nav-tables").click(function(e) {
+        e.preventDefault();
+        switchTab('tables', 'Quản Lý Bàn Ăn', 'Thêm, đổi tên, xóa bàn và theo dõi trạng thái thời gian thực');
     });
 
-    $("#tabFilterCustomer").click(function() {
-        selectedStaffFilter = 'customer';
-        $(this).removeClass("border-transparent text-gray-400 hover:text-white").addClass("border-gold-400 text-gold-400");
-        $("#tabFilterStaff").removeClass("border-gold-400 text-gold-400").addClass("border-transparent text-gray-400 hover:text-white");
-        renderStaffs();
+    $("#nav-bookings").click(function(e) {
+        e.preventDefault();
+        switchTab('bookings', 'Quản Lý Đặt Bàn', 'Xác nhận phiếu đặt, ghi nhận khách đến và hủy phiếu');
     });
+
+    // Trước đây dòng này truyền `this` (thẻ <a>) vào chỗ tham số `title`, nên
+    // tiêu đề trang hiện ra "[object HTMLAnchorElement]" còn phụ đề thì giữ
+    // nguyên của tab trước. Sửa lại cho đúng chữ ký ba tham số.
+    $("#nav-vouchers").click(function(e) {
+        e.preventDefault();
+        switchTab('vouchers', 'Quản Lý Voucher',
+                  'Tạo chương trình khuyến mãi, đặt khung thời gian chạy và theo dõi số mã đã phát');
+    });
+
+    $("#nav-chat").click(function(e) {
+        e.preventDefault();
+        switchTab('chat', 'Chăm Sóc Khách Hàng',
+                  'Trả lời thắc mắc và khiếu nại của khách gửi từ ứng dụng');
+    });
+    $("#nav-landing").click(function(e) {
+        e.preventDefault();
+        switchTab('landing', 'Quản Lý Landing Page', 'Tùy chỉnh nội dung, thông tin hotline và thực đơn công khai cho khách hàng');
+    });
+
+
 
     function switchTab(tab, title, subtitle) {
+        // Báo tab CŨ biết là nó sắp bị ẩn. Màn hình chăm sóc khách hàng dùng
+        // tín hiệu này để tắt vòng hỏi lại — nếu không, trang quản trị mở suốt
+        // ca sẽ gọi mạng hàng nghìn lần cho một tab không ai nhìn.
+        if (activeTab && activeTab !== tab) {
+            document.dispatchEvent(new CustomEvent('admin:roi-tab', { detail: activeTab }));
+        }
         activeTab = tab;
         // Cập nhật trạng thái active menu
         $("nav a").removeClass("nav-item-active");
@@ -139,6 +179,11 @@ $(document).ready(function() {
         $("#tab-overview-content").addClass("hidden");
         $("#tab-menu-content").addClass("hidden");
         $("#tab-staff-content").addClass("hidden");
+        $("#tab-tables-content").addClass("hidden");
+        $("#tab-bookings-content").addClass("hidden");
+        $("#tab-vouchers-content").addClass("hidden");
+        $("#tab-chat-content").addClass("hidden");
+        $("#tab-landing-content").addClass("hidden");
         $(`#tab-${tab}-content`).removeClass("hidden");
 
         // Tải dữ liệu tương ứng
@@ -147,7 +192,18 @@ $(document).ready(function() {
         } else if (tab === 'menu') {
             loadCategories();
         } else if (tab === 'staff') {
-            loadStaffs();
+            document.dispatchEvent(new CustomEvent('admin:mo-tab-nhan-vien'));
+        } else if (tab === 'tables') {
+            document.dispatchEvent(new CustomEvent('admin:mo-tab-ban-an'));
+        } else if (tab === 'bookings') {
+            document.dispatchEvent(new CustomEvent('admin:mo-tab-dat-ban'));
+        } else if (tab === 'vouchers') {
+            document.dispatchEvent(new CustomEvent('admin:mo-tab-voucher'));
+        } else if (tab === 'chat') {
+            document.dispatchEvent(new CustomEvent('admin:mo-tab-chat'));
+        } else if (tab === 'landing') {
+            loadLandingConfig();
+            loadLandingDishPreviews();
         }
     }
 
@@ -273,682 +329,43 @@ $(document).ready(function() {
     }
 
     // 6. QUẢN LÝ THỰC ĐƠN (Tab Menu)
+    /* ------------------------------------------------------------------
+     * ĐÃ CHUYỂN SANG js/screens/CategoryScreen.js
+     * ------------------------------------------------------------------
+     * Phần quản lý danh mục nay do lớp CategoryScreen đảm nhiệm (nạp, vẽ,
+     * thêm, sửa, xóa). Hàm này chỉ còn nhiệm vụ báo cho module mới biết
+     * rằng tab Thực đơn vừa được mở.
+     *
+     * Dùng sự kiện tùy biến thay vì gọi trực tiếp, vì admin.js là script
+     * thường còn CategoryScreen là ES module — hai bên không thấy phạm vi
+     * của nhau. Sự kiện cũng khiến ranh giới tạm thời này dễ nhận ra khi
+     * chuyển nốt Món ăn và Nhân viên sang lớp mới.
+     * ------------------------------------------------------------------ */
     function loadCategories() {
-        $.ajax({
-            url: CONFIG.BASE_URL + "api/get_categories.php",
-            type: "GET",
-            dataType: "json",
-            success: function(data) {
-                categories = data;
-                renderCategories();
-                
-                // Nếu chưa có category được chọn, mặc định chọn category đầu tiên
-                if (categories.length > 0) {
-                    if (!selectedCategory || !categories.find(c => c.MALOAI === selectedCategory.MALOAI)) {
-                        selectCategory(categories[0]);
-                    } else {
-                        // Refresh lại category hiện tại
-                        const current = categories.find(c => c.MALOAI === selectedCategory.MALOAI);
-                        selectCategory(current);
-                    }
-                } else {
-                    $("#dishesTableBody").html(`
-                        <tr>
-                            <td colspan="4" class="py-6 text-center text-slate-500">Chưa có danh mục nào. Hãy tạo danh mục trước!</td>
-                        </tr>
-                    `);
-                }
-            }
-        });
+        document.dispatchEvent(new CustomEvent('admin:mo-tab-thuc-don'));
     }
 
-    function renderCategories() {
-        let html = '';
-        categories.forEach(c => {
-            const isSelected = selectedCategory && selectedCategory.MALOAI === c.MALOAI;
-            const imgUrl = c.HINHANH ? (c.HINHANH.startsWith('http') ? c.HINHANH : CONFIG.BASE_URL + c.HINHANH) : 'https://placehold.co/80x80?text=Menu';
-            
-            html += `
-                <div data-id="${c.MALOAI}" 
-                     class="flex items-center justify-between p-3 rounded-xl cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-900/60 transition-all border ${isSelected ? 'border-gold bg-slate-100/80 dark:bg-slate-900/40 text-gold font-bold shadow-sm shadow-gold/5' : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'}">
-                    <div class="flex items-center space-x-3 flex-1 min-w-0">
-                        <img class="w-10 h-10 rounded-lg object-cover" src="${imgUrl}" alt="${c.TENLOAI}" onerror="this.src='https://placehold.co/80x80?text=Menu'">
-                        <span class="truncate text-sm">${c.TENLOAI}</span>
-                    </div>
-                    <div class="flex items-center space-x-1 pl-2">
-                        <button class="btnEditCategory p-1 text-slate-400 hover:text-gold transition-colors" data-id="${c.MALOAI}"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <button class="btnDeleteCategory p-1 text-slate-400 hover:text-red-400 transition-colors" data-id="${c.MALOAI}"><i class="fa-solid fa-trash text-xs"></i></button>
-                    </div>
-                </div>
-            `;
-        });
-        $("#categoriesList").html(html);
 
-        // Click chọn danh mục
-        $("#categoriesList > div").click(function(e) {
-            // Tránh click trúng nút sửa/xóa
-            if ($(e.target).closest('button').length > 0) return;
-            const id = $(this).data("id");
-            const catObj = categories.find(c => c.MALOAI == id);
-            if (catObj) selectCategory(catObj);
-        });
+    /* Bảng món ăn nay do DishScreen quản lý; sự kiện
+       admin:chon-danh-muc được xử lý trong js/app-admin.js. */
 
-        // Click sửa danh mục
-        $(".btnEditCategory").click(function(e) {
-            e.stopPropagation();
-            const id = $(this).data("id");
-            const catObj = categories.find(c => c.MALOAI == id);
-            if (catObj) showCategoryModal('edit', catObj);
-        });
 
-        // Click xóa danh mục
-        $(".btnDeleteCategory").click(function(e) {
-            e.stopPropagation();
-            const id = $(this).data("id");
-            confirmDeleteCategory(id);
-        });
-    }
-
-    function selectCategory(category) {
-        selectedCategory = category;
-        renderCategories(); // Cập nhật style border
-        $("#dishSectionTitle").text(`Món Ăn - ${category.TENLOAI}`);
-        loadDishes(category.MALOAI);
-    }
-
-    function loadDishes(categoryId) {
-        // Tải toàn bộ món ăn theo category không phân trang (search rỗng)
-        $.ajax({
-            url: CONFIG.BASE_URL + "api/get_dishes.php",
-            type: "GET",
-            data: { maloai: categoryId, page: 1, limit: 100 },
-            dataType: "json",
-            success: function(response) {
-                if (response.status === "success") {
-                    dishes = response.data;
-                    renderDishes();
-                }
-            }
-        });
-    }
-
-    function renderDishes() {
-        if (dishes.length === 0) {
-            $("#dishesTableBody").html(`
-                <tr>
-                    <td colspan="4" class="py-6 text-center text-slate-400 dark:text-slate-500">Danh mục này chưa có món ăn nào</td>
-                </tr>
-            `);
-            return;
-        }
-
-        let html = '';
-        dishes.forEach(d => {
-            const imgUrl = d.HINHANH ? (d.HINHANH.startsWith('http') ? d.HINHANH : CONFIG.BASE_URL + d.HINHANH) : 'https://placehold.co/100x100?text=Food';
-            const isChecked = d.TINHTRANG === 'true' ? 'checked' : '';
-            
-            html += `
-                <tr class="border-b border-slate-100 dark:border-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
-                    <td class="py-3 flex items-center space-x-3">
-                        <img class="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-800" src="${imgUrl}" alt="${d.TENMON}" onerror="this.src='https://placehold.co/100x100?text=Food'">
-                        <div>
-                            <span class="font-semibold text-slate-800 dark:text-slate-200 block text-sm">${d.TENMON}</span>
-                            <span class="text-xs text-slate-400 dark:text-slate-500">Mã món: #${d.MAMON}</span>
-                        </div>
-                    </td>
-                    <td class="py-3 text-right font-extrabold text-slate-800 dark:text-white text-sm">${formatMoney(d.GIATIEN)}</td>
-                    <td class="py-3 text-center">
-                        <label class="relative inline-flex items-center cursor-pointer justify-center">
-                            <input type="checkbox" data-id="${d.MAMON}" class="toggleDishStatus sr-only peer" ${isChecked}>
-                            <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 dark:peer-checked:bg-emerald-600"></div>
-                        </label>
-                    </td>
-                    <td class="py-3 text-right">
-                        <div class="flex items-center justify-end space-x-2">
-                            <button class="btnEditDish p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-gold hover:text-gold text-slate-500 dark:text-slate-400 transition-all text-xs shadow-sm" data-id="${d.MAMON}"><i class="fa-solid fa-pen"></i></button>
-                            <button class="btnDeleteDish p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-400 dark:hover:border-red-900/50 hover:text-red-500 dark:hover:text-red-400 text-slate-550 dark:text-slate-400 transition-all text-xs shadow-sm" data-id="${d.MAMON}"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        $("#dishesTableBody").html(html);
-
-        // Bật tắt trạng thái món ăn
-        $(".toggleDishStatus").change(function() {
-            const maMon = $(this).data("id");
-            const newStatus = $(this).is(":checked") ? "true" : "false";
-
-            $.ajax({
-                url: CONFIG.BASE_URL + "api/update_dish_status.php",
-                type: "POST",
-                data: { mamon: maMon, tinhtrang: newStatus },
-                dataType: "json",
-                success: function(response) {
-                    if (response.status !== "success") {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Thất bại',
-                            text: 'Không thể cập nhật trạng thái món ăn.',
-                            background: getSwalBg(),
-                            color: getSwalColor()
-                        });
-                        loadDishes(selectedCategory.MALOAI); // Reload lại nếu lỗi
-                    } else {
-                        // Trạng thái cập nhật thành công -> Phát tín hiệu Socket
-                        if (socket && socket.connected) {
-                            socket.emit('refresh_orders');
-                            socket.emit('menu_changed');
-                        }
-                    }
-                }
-            });
-        });
-
-        // Click sửa món ăn
-        $(".btnEditDish").click(function() {
-            const id = $(this).data("id");
-            const dishObj = dishes.find(d => d.MAMON == id);
-            if (dishObj) showDishModal('edit', dishObj);
-        });
-
-        // Click xóa món ăn
-        $(".btnDeleteDish").click(function() {
-            const id = $(this).data("id");
-            confirmDeleteDish(id);
-        });
-    }
 
     // Modal Thêm/Sửa Danh mục
-    $("#btnAddCategory").click(function() {
-        showCategoryModal('add');
-    });
 
-    function showCategoryModal(action, catData = null) {
-        const title = action === 'add' ? 'Thêm Danh Mục' : 'Sửa Danh Mục';
-        const nameVal = catData ? catData.TENLOAI : '';
 
-        Swal.fire({
-            title: title,
-            html: `
-                <div class="space-y-4 text-left">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Tên danh mục</label>
-                        <input type="text" id="swalCatName" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${nameVal}" placeholder="Nhập tên danh mục...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-455 dark:text-slate-400 mb-1">Ảnh danh mục</label>
-                        <input type="file" id="swalCatImage" class="w-full bg-slate-55 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 px-4 text-slate-450 dark:text-slate-400 text-xs focus:outline-none focus:border-gold" accept="image/*">
-                    </div>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonColor: '#d4af37',
-            cancelButtonColor: '#334155',
-            confirmButtonText: 'Lưu lại',
-            cancelButtonText: 'Hủy',
-            background: getSwalBg(),
-            color: getSwalColor(),
-            preConfirm: () => {
-                const name = $("#swalCatName").val().trim();
-                if (!name) {
-                    Swal.showValidationMessage('Vui lòng nhập tên danh mục');
-                    return false;
-                }
-                
-                // Trả về dữ liệu
-                const fileInput = document.getElementById('swalCatImage');
-                if (fileInput.files.length > 0) {
-                    return getBase64(fileInput.files[0]).then(base64 => {
-                        return { name: name, image: base64 };
-                    });
-                }
-                return { name: name, image: '' };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const payload = {
-                    action: action,
-                    tenloai: result.value.name,
-                    hinhanh: result.value.image
-                };
-                if (action === 'edit') {
-                    payload.maloai = catData.MALOAI;
-                }
-
-                $.ajax({
-                    url: CONFIG.BASE_URL + "api/update_category.php",
-                    type: "POST",
-                    data: payload,
-                    dataType: "json",
-                    success: function(res) {
-                        if (res.status === "success") {
-                            Swal.fire({ icon: 'success', title: 'Thành công!', timer: 1500, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
-                            loadCategories();
-                            if (socket && socket.connected) {
-                                socket.emit('refresh_orders');
-                                socket.emit('menu_changed');
-                            }
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message, background: getSwalBg(), color: getSwalColor() });
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    function confirmDeleteCategory(categoryId) {
-        Swal.fire({
-            title: 'Xóa danh mục?',
-            text: 'Bạn có chắc chắn muốn xóa danh mục này? Hãy chắc chắn không có món ăn nào thuộc danh mục này.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#334155',
-            confirmButtonText: 'Đồng ý xóa',
-            cancelButtonText: 'Hủy',
-            background: getSwalBg(),
-            color: getSwalColor()
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: CONFIG.BASE_URL + "api/update_category.php",
-                    type: "POST",
-                    data: { action: 'delete', maloai: categoryId },
-                    dataType: "json",
-                    success: function(res) {
-                        if (res.status === "success") {
-                            Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1200, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
-                            selectedCategory = null;
-                            loadCategories();
-                            if (socket && socket.connected) {
-                                socket.emit('refresh_orders');
-                                socket.emit('menu_changed');
-                            }
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message, background: getSwalBg(), color: getSwalColor() });
-                        }
-                    }
-                });
-            }
-        });
-    }
 
     // Modal Thêm/Sửa Món ăn
-    $("#btnAddDish").click(function() {
-        if (!selectedCategory) return;
-        showDishModal('add');
-    });
 
-    function showDishModal(action, dishData = null) {
-        const title = action === 'add' ? 'Thêm Món Ăn Mới' : 'Sửa Món Ăn';
-        const nameVal = dishData ? dishData.TENMON : '';
-        const priceVal = dishData ? dishData.GIATIEN : '';
-        const statusVal = dishData ? dishData.TINHTRANG : 'true';
 
-        Swal.fire({
-            title: title,
-            html: `
-                <div class="space-y-4 text-left">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Tên món ăn</label>
-                        <input type="text" id="swalDishName" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${nameVal}" placeholder="Nhập tên món...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Đơn giá (VNĐ)</label>
-                        <input type="number" id="swalDishPrice" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${priceVal}" placeholder="Nhập giá tiền...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Ảnh minh họa</label>
-                        <input type="file" id="swalDishImage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 px-4 text-slate-450 dark:text-slate-400 text-xs focus:outline-none focus:border-gold" accept="image/*">
-                    </div>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonColor: '#d4af37',
-            cancelButtonColor: '#334155',
-            confirmButtonText: 'Lưu lại',
-            cancelButtonText: 'Hủy',
-            background: getSwalBg(),
-            color: getSwalColor(),
-            preConfirm: () => {
-                const name = $("#swalDishName").val().trim();
-                const price = $("#swalDishPrice").val().trim();
-                
-                if (!name || !price) {
-                    Swal.showValidationMessage('Vui lòng điền đầy đủ tên và giá món ăn');
-                    return false;
-                }
-                
-                const fileInput = document.getElementById('swalDishImage');
-                if (fileInput.files.length > 0) {
-                    return getBase64(fileInput.files[0]).then(base64 => {
-                        return { name: name, price: price, image: base64 };
-                    });
-                }
-                return { name: name, price: price, image: '' };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const payload = {
-                    action: action,
-                    tenmon: result.value.name,
-                    giatien: result.value.price,
-                    hinhanh: result.value.image,
-                    maloai: selectedCategory.MALOAI,
-                    tinhtrang: statusVal
-                };
-                if (action === 'edit') {
-                    payload.mamon = dishData.MAMON;
-                }
-
-                $.ajax({
-                    url: CONFIG.BASE_URL + "api/update_dish.php",
-                    type: "POST",
-                    data: payload,
-                    dataType: "json",
-                    success: function(res) {
-                        if (res.status === "success") {
-                            Swal.fire({ icon: 'success', title: 'Thành công!', timer: 1500, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
-                            loadDishes(selectedCategory.MALOAI);
-                            if (socket && socket.connected) {
-                                socket.emit('refresh_orders');
-                                socket.emit('menu_changed');
-                            }
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message, background: getSwalBg(), color: getSwalColor() });
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    function confirmDeleteDish(dishId) {
-        Swal.fire({
-            title: 'Xóa món ăn này?',
-            text: 'Món ăn này sẽ bị xóa vĩnh viễn khỏi thực đơn của quán!',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#334155',
-            confirmButtonText: 'Đồng ý xóa',
-            cancelButtonText: 'Hủy',
-            background: getSwalBg(),
-            color: getSwalColor()
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: CONFIG.BASE_URL + "api/update_dish.php",
-                    type: "POST",
-                    data: { action: 'delete', mamon: dishId },
-                    dataType: "json",
-                    success: function(res) {
-                        if (res.status === "success") {
-                            Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1200, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
-                            loadDishes(selectedCategory.MALOAI);
-                            if (socket && socket.connected) {
-                                socket.emit('refresh_orders');
-                                socket.emit('menu_changed');
-                            }
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message, background: getSwalBg(), color: getSwalColor() });
-                        }
-                    }
-                });
-            }
-        });
-    }
 
     // 7. QUẢN LÝ NHÂN VIÊN (Tab Staff)
-    function loadStaffs() {
-        $.ajax({
-            url: CONFIG.BASE_URL + "api/get_staff.php",
-            type: "GET",
-            dataType: "json",
-            success: function(data) {
-                staffs = data;
-                renderStaffs();
-            }
-        });
-    }
 
-    function renderStaffs() {
-        const filteredStaffs = staffs.filter(s => {
-            if (selectedStaffFilter === 'staff') {
-                return s.MAQUYEN != 4;
-            } else {
-                return s.MAQUYEN == 4;
-            }
-        });
-
-        if (filteredStaffs.length === 0) {
-            const emptyMsg = selectedStaffFilter === 'staff' 
-                ? 'Chưa có tài khoản nhân viên nào' 
-                : 'Chưa có tài khoản khách hàng nào';
-            $("#staffTableBody").html(`
-                <tr>
-                    <td colspan="5" class="py-6 text-center text-slate-550">${emptyMsg}</td>
-                </tr>
-            `);
-            return;
-        }
-
-        let html = '';
-        filteredStaffs.forEach(s => {
-            const roleColor = s.MAQUYEN == 1 
-                ? 'text-red-500 dark:text-red-400 bg-red-500/10 border-red-500/20' 
-                : (s.MAQUYEN == 3 
-                    ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
-                    : (s.MAQUYEN == 4
-                        ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
-                        : 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20'));
-            
-            const roleName = s.MAQUYEN == 4 ? 'Khách hàng' : s.TENQUYEN;
-            
-            html += `
-                <tr class="border-b border-slate-100 dark:border-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
-                    <td class="px-6 py-4 font-bold text-slate-800 dark:text-white text-sm">${s.HOTENNV}</td>
-                    <td class="px-6 py-4 text-slate-500 dark:text-slate-400 font-medium text-xs">${s.TENDN}</td>
-                    <td class="px-6 py-4">
-                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${roleColor}">${roleName}</span>
-                    </td>
-                    <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium text-xs">
-                        <div><i class="fa-solid fa-phone mr-1.5 text-slate-400"></i>${s.SDT || 'Chưa cập nhật'}</div>
-                        <div class="mt-1"><i class="fa-solid fa-envelope mr-1.5 text-slate-400"></i>${s.EMAIL || 'Chưa cập nhật'}</div>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <div class="flex items-center justify-end space-x-2">
-                            <button class="btnEditStaff p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-gold hover:text-gold text-slate-500 dark:text-slate-400 transition-all text-xs shadow-sm" data-id="${s.MANV}"><i class="fa-solid fa-user-pen"></i></button>
-                            <button class="btnDeleteStaff p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-400 dark:hover:border-red-900/50 hover:text-red-500 dark:hover:text-red-400 text-slate-550 dark:text-slate-400 transition-all text-xs shadow-sm" data-id="${s.MANV}"><i class="fa-solid fa-user-xmark"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        $("#staffTableBody").html(html);
-
-        // Click sửa nhân viên
-        $(".btnEditStaff").click(function() {
-            const id = $(this).data("id");
-            const staffObj = staffs.find(s => s.MANV == id);
-            if (staffObj) showStaffModal('edit', staffObj);
-        });
-
-        // Click xóa nhân viên
-        $(".btnDeleteStaff").click(function() {
-            const id = $(this).data("id");
-            confirmDeleteStaff(id);
-        });
-    }
 
     // Modal Thêm/Sửa Nhân viên
-    $("#btnCreateStaff").click(function() {
-        showStaffModal('add');
-    });
+    /* Nút thêm tài khoản nay do StaffScreen xử lý. */
 
-    function showStaffModal(action, staffData = null) {
-        const title = action === 'add' ? 'Thêm Tài Khoản Nhân Viên' : 'Chỉnh Sửa Tài Khoản';
-        const hotenVal = staffData ? staffData.HOTENNV : '';
-        const tendnVal = staffData ? staffData.TENDN : '';
-        const mkVal = staffData ? staffData.MATKHAU : '';
-        const mailVal = staffData ? staffData.EMAIL : '';
-        const sdtVal = staffData ? staffData.SDT : '';
-        const gtVal = staffData ? staffData.GIOITINH : 'Nam';
-        const nsVal = staffData ? staffData.NGAYSINH : '2000-01-01';
-        const qVal = staffData ? staffData.MAQUYEN : 2;
 
-        Swal.fire({
-            title: title,
-            html: `
-                <div class="grid grid-cols-2 gap-4 text-left">
-                    <div class="col-span-2">
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Họ và tên nhân viên</label>
-                        <input type="text" id="swalStaffName" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${hotenVal}" placeholder="Nhập họ và tên...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Tên đăng nhập</label>
-                        <input type="text" id="swalStaffUser" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${tendnVal}" placeholder="Nhập tên tài khoản...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Mật khẩu</label>
-                        <input type="password" id="swalStaffPass" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${mkVal}" placeholder="Nhập mật khẩu...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Số điện thoại</label>
-                        <input type="text" id="swalStaffPhone" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${sdtVal}" placeholder="Nhập SĐT...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-455 dark:text-slate-400 mb-1">Email</label>
-                        <input type="email" id="swalStaffEmail" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${mailVal}" placeholder="Nhập email...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Giới tính</label>
-                        <select id="swalStaffGender" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold">
-                            <option value="Nam" ${gtVal === 'Nam' ? 'selected' : ''}>Nam</option>
-                            <option value="Nữ" ${gtVal === 'Nữ' ? 'selected' : ''}>Nữ</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Ngày sinh</label>
-                        <input type="date" id="swalStaffBirth" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold" value="${nsVal}">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-semibold text-slate-450 dark:text-slate-400 mb-1">Vai trò quyền</label>
-                        <select id="swalStaffRole" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-gold">
-                            <option value="1" ${qVal == 1 ? 'selected' : ''}>Quản lý (Admin)</option>
-                            <option value="2" ${qVal == 2 ? 'selected' : ''}>Nhân viên phục vụ</option>
-                            <option value="3" ${qVal == 3 ? 'selected' : ''}>Thu ngân (Cashier)</option>
-                            <option value="4" ${qVal == 4 ? 'selected' : ''}>Khách hàng (Customer)</option>
-                        </select>
-                    </div>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonColor: '#d4af37',
-            cancelButtonColor: '#334155',
-            confirmButtonText: 'Lưu lại',
-            cancelButtonText: 'Hủy',
-            background: getSwalBg(),
-            color: getSwalColor(),
-            preConfirm: () => {
-                const hoten = $("#swalStaffName").val().trim();
-                const tendn = $("#swalStaffUser").val().trim();
-                const matkhau = $("#swalStaffPass").val().trim();
-                const sdt = $("#swalStaffPhone").val().trim();
-                const email = $("#swalStaffEmail").val().trim();
-                const gioitinh = $("#swalStaffGender").val();
-                const ngaysinh = $("#swalStaffBirth").val();
-                const maquyen = $("#swalStaffRole").val();
-
-                if (!hoten || !tendn || !matkhau) {
-                    Swal.showValidationMessage('Họ tên, tài khoản và mật khẩu là bắt buộc!');
-                    return false;
-                }
-                
-                return {
-                    hoten: hoten,
-                    tendn: tendn,
-                    matkhau: matkhau,
-                    sdt: sdt,
-                    email: email,
-                    gioitinh: gioitinh,
-                    ngaysinh: ngaysinh,
-                    maquyen: maquyen
-                };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const payload = {
-                    action: action,
-                    ...result.value
-                };
-                if (action === 'edit') {
-                    payload.manv = staffData.MANV;
-                }
-
-                $.ajax({
-                    url: CONFIG.BASE_URL + "api/update_staff.php",
-                    type: "POST",
-                    data: payload,
-                    dataType: "json",
-                    success: function(res) {
-                        if (res.status === "success") {
-                            Swal.fire({ icon: 'success', title: 'Thành công!', timer: 1500, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
-                            loadStaffs();
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Lỗi', text: res.message, background: getSwalBg(), color: getSwalColor() });
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    function confirmDeleteStaff(staffId) {
-        // Bảo vệ không tự xóa chính mình
-        if (parseInt(staffId) === parseInt(manv)) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Không thể xóa!',
-                text: 'Bạn không thể xóa tài khoản Admin đang đăng nhập hệ thống.',
-                background: getSwalBg(),
-                color: getSwalColor()
-            });
-            return;
-        }
-
-        Swal.fire({
-            title: 'Xóa tài khoản này?',
-            text: 'Tài khoản nhân viên này sẽ bị xóa khỏi hệ thống cơ sở dữ liệu!',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#334155',
-            confirmButtonText: 'Đồng ý xóa',
-            cancelButtonText: 'Hủy',
-            background: getSwalBg(),
-            color: getSwalColor()
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: CONFIG.BASE_URL + "api/update_staff.php",
-                    type: "POST",
-                    data: { action: 'delete', manv: staffId },
-                    dataType: "json",
-                    success: function(res) {
-                        if (res.status === "success") {
-                            Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1200, background: getSwalBg(), color: getSwalColor(), showConfirmButton: false });
-                            loadStaffs();
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Thất bại', text: res.message, background: getSwalBg(), color: getSwalColor() });
-                        }
-                    }
-                });
-            }
-        });
-    }
 
     // 8. ĐĂNG XUẤT
     $("#logoutBtn").click(function() {
@@ -1002,7 +419,36 @@ $(document).ready(function() {
     let unreadCount = 0;
     let notifPanelOpen = false;
 
-    // Khởi tạo: Load đơn hôm nay lần đầu (không thông báo, chỉ đánh dấu "đã biết")
+    // =====================================================================
+    // Mốc "đơn đã xem" — lưu bền qua các lần tải trang
+    // =====================================================================
+    // Phiên bản cũ đánh dấu MỌI đơn trong ngày là "đã biết" ngay khi tải
+    // trang, rồi mới bật WebSocket. Hệ quả: đơn được thanh toán trong lúc
+    // quản lý không mở trang sẽ bị xếp vào nhóm "đã biết" và im lặng vĩnh
+    // viễn — không bao giờ hiện thông báo nữa.
+    //
+    // Cách sửa: ghi nhớ mã đơn lớn nhất ĐÃ THỰC SỰ hiển thị cho người dùng
+    // vào localStorage. Lần tải trang sau, mọi đơn có mã lớn hơn mốc đó là
+    // đơn phát sinh khi người dùng vắng mặt, và phải được báo lại.
+    const KEY_MOC_DA_XEM = 'ROYAL_ADMIN_LAST_SEEN_ORDER';
+
+    function docMocDaXem() {
+        try {
+            const v = localStorage.getItem(KEY_MOC_DA_XEM);
+            return v === null ? null : parseInt(v, 10);
+        } catch (e) {
+            return null; // chế độ ẩn danh hoặc trình duyệt chặn lưu trữ
+        }
+    }
+
+    function ghiMocDaXem(id) {
+        try {
+            const hienTai = docMocDaXem() || 0;
+            if (id > hienTai) localStorage.setItem(KEY_MOC_DA_XEM, String(id));
+        } catch (e) { /* không lưu được thì bỏ qua, không làm hỏng luồng chính */ }
+    }
+
+    // Khởi tạo: nạp đơn hôm nay, báo lại những đơn phát sinh lúc vắng mặt
     function initNotifications() {
         $.ajax({
             url: CONFIG.BASE_URL + 'api/get_paid_orders.php',
@@ -1010,9 +456,36 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(data) {
                 if (!Array.isArray(data)) return;
+
                 const today = getTodayStr();
-                data.filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(today))
-                    .forEach(o => knownOrderIds.add(parseInt(o.MADONDAT)));
+                const donHomNay = data
+                    .filter(o => o.NGAYDAT && o.NGAYDAT.startsWith(today))
+                    .sort((a, b) => parseInt(a.MADONDAT) - parseInt(b.MADONDAT));
+
+                const moc = docMocDaXem();
+                const maLonNhat = donHomNay.reduce(
+                    (m, o) => Math.max(m, parseInt(o.MADONDAT) || 0), 0);
+
+                if (moc === null) {
+                    // Lần đầu dùng trên trình duyệt này: coi như đã xem hết,
+                    // tránh dội một loạt thông báo về các đơn cũ.
+                    donHomNay.forEach(o => knownOrderIds.add(parseInt(o.MADONDAT)));
+                    if (maLonNhat > 0) ghiMocDaXem(maLonNhat);
+                } else {
+                    let soDonBoLo = 0;
+                    donHomNay.forEach(o => {
+                        const id = parseInt(o.MADONDAT);
+                        knownOrderIds.add(id);
+                        if (id > moc) {
+                            addNotification(o); // đơn phát sinh lúc vắng mặt
+                            soDonBoLo++;
+                        }
+                    });
+                    if (maLonNhat > 0) ghiMocDaXem(maLonNhat);
+                    if (soDonBoLo > 0) {
+                        console.log(`🔔 Khôi phục ${soDonBoLo} đơn phát sinh khi vắng mặt`);
+                    }
+                }
 
                 // Khởi động kết nối WebSocket để nhận đơn real-time
                 initWebSocket();
@@ -1020,12 +493,31 @@ $(document).ready(function() {
         });
     }
 
+    /* Cầu nối tạm thời: các module ES (CategoryScreen…) chưa có socket
+       riêng nên nhờ kết nối của tệp này phát hộ. Bỏ được khi toàn bộ màn
+       hình đã chuyển sang SocketBus. */
+    document.addEventListener('admin:socket-phat', function (e) {
+        const ten = e.detail && e.detail.tenSuKien;
+        if (ten && socket && socket.connected) {
+            socket.emit(ten, e.detail.duLieu);
+        }
+    });
+
     // Kết nối WebSocket Socket.io
     function initWebSocket() {
+        // Socket.IO luôn đi qua CÙNG origin với trang web. Apache (container
+        // "web") chuyển tiếp /socket.io/ sang container resto-socket, xử lý
+        // cả long-polling lẫn nâng cấp WebSocket.
+        //
+        // Đoạn cũ ghi cứng IP của VPS và kích hoạt khi hostname là localhost,
+        // nghĩa là chạy ở môi trường local thì luôn cố nối tới máy chủ đó.
+        // VPS nay đã bị hủy nên nhánh này khiến kết nối treo tới khi timeout.
         let socketUrl = window.location.origin;
-        // Nếu mở file local dạng file:// hoặc local IP, trỏ trực tiếp về Host Apache port 80 của VPS
-        if (window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-            socketUrl = 'http://103.157.204.120';
+
+        // Chỉ khi mở tệp trực tiếp bằng giao thức file:// mới không có origin
+        // hợp lệ để suy ra — khi đó trỏ về cổng của container web.
+        if (window.location.protocol === 'file:') {
+            socketUrl = 'http://localhost:8000';
         }
         
         console.log('Connecting to WebSocket at:', socketUrl);
@@ -1045,8 +537,18 @@ $(document).ready(function() {
                 if (!knownOrderIds.has(orderId)) {
                     knownOrderIds.add(orderId);
                     addNotification(order);
+                    // Ghi mốc ngay khi thông báo thực sự hiển thị, để lần tải
+                    // trang sau không báo lại đơn này lần nữa.
+                    ghiMocDaXem(orderId);
                 }
             });
+        });
+
+        /* Máy chủ tự dò phiếu đặt bàn mới rồi đẩy về đây.
+           Phải do máy chủ dò vì phiếu từ landing page đi qua endpoint công
+           khai, mà trang đó không có kết nối Socket.IO để tự báo. */
+        socket.on('new_booking', (danhSach) => {
+            xuLyPhieuDatBan(danhSach);
         });
 
         socket.on('disconnect', () => {
@@ -1057,12 +559,20 @@ $(document).ready(function() {
     // Thêm 1 thông báo mới vào hệ thống
     function addNotification(order) {
         const notif = {
-            id: order.MADONDAT,
+            loai: 'don',                 // phân biệt với thông báo đặt bàn
+            id: 'don-' + order.MADONDAT,
             tenBan: order.TENBAN,
             tongTien: order.TONGTIEN,
             nhanVien: order.HOTENNV,
             phuongThuc: order.PHUONGTHUCTT || 'Tiền mặt',
-            thoiGian: order.NGAYDAT ? order.NGAYDAT.split(' ')[1].substring(0, 5) : '--:--',
+            // Xem chú thích hàm layGioPhut() trong cashier.html: nếu chuỗi
+            // thời gian không chứa dấu cách thì split(' ')[1] là undefined
+            // và .substring() sẽ ném TypeError giữa vòng lặp dựng giao diện.
+            thoiGian: (function (s) {
+                if (!s || typeof s !== 'string') return '--:--';
+                const p = s.split(' ');
+                return (p.length < 2 || !p[1]) ? '--:--' : p[1].substring(0, 5);
+            })(order.NGAYDAT),
             read: false
         };
 
@@ -1075,6 +585,140 @@ $(document).ready(function() {
     }
 
     // Cập nhật badge số trên nút chuông
+    /* ==================================================================
+     * THÔNG BÁO ĐẶT BÀN
+     * ==================================================================
+     * Dùng chung panel và badge với thông báo thanh toán, chỉ khác biểu
+     * tượng và nội dung. Gộp chung để người quản lý có MỘT chỗ duy nhất
+     * cần theo dõi, thay vì phải nhớ nhìn hai nơi.
+     *
+     * Mốc "đã xem" lưu riêng khỏi mốc của đơn hàng: hai loại có dãy mã
+     * độc lập nhau, dùng chung một mốc sẽ làm mất thông báo của loại có
+     * mã nhỏ hơn.
+     */
+    const KEY_MOC_DAT_BAN = 'ROYAL_ADMIN_LAST_SEEN_BOOKING';
+    let knownBookingIds = new Set();
+
+    function docMocDatBan() {
+        try {
+            const v = localStorage.getItem(KEY_MOC_DAT_BAN);
+            return v === null ? null : parseInt(v, 10);
+        } catch (e) { return null; }
+    }
+
+    function ghiMocDatBan(id) {
+        try {
+            const htai = docMocDatBan() || 0;
+            if (id > htai) localStorage.setItem(KEY_MOC_DAT_BAN, String(id));
+        } catch (e) { /* bỏ qua */ }
+    }
+
+    /**
+     * Tách chuỗi thời gian hẹn thành { gio, ngay } để hiển thị.
+     *
+     * Nhận cả hai định dạng vì hai nguồn dữ liệu khác nhau:
+     *   - REST/PDO  : '2026-09-17 18:00:00'  (dấu cách)
+     *   - mysql2 cũ : '2026-09-17T18:00:00.000Z' (ISO, sau khi JSON hóa)
+     * Máy chủ socket nay đã bật dateStrings nên luôn trả dạng thứ nhất,
+     * nhưng vẫn nhận dạng ISO để một lần đổi thư viện không làm vỡ giao
+     * diện lần nữa. Ngày hiển thị theo kiểu Việt Nam: dd/mm.
+     */
+    function tachGioNgayHen(chuoi) {
+        if (!chuoi) return { gio: '--:--', ngay: '' };
+
+        const m = String(chuoi).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+        if (!m) return { gio: '--:--', ngay: '' };
+
+        return { gio: m[4] + ':' + m[5], ngay: m[3] + '/' + m[2] };
+    }
+
+    function themThongBaoDatBan(phieu) {
+        const notif = {
+            loai: 'datban',
+            id: 'datban-' + phieu.MADATBAN,
+            maPhieu: phieu.MADATBAN,
+            tenKhach: phieu.TENNGUOIDAT || 'Khách vãng lai',
+            sdt: phieu.SDTNGUOIDAT || '',
+            tenBan: phieu.TENBAN || 'Chưa xếp bàn',
+            soKhach: parseInt(phieu.SOKHACH, 10) || 0,
+            ghiChu: phieu.GHICHU || '',
+            thoiGianHen: phieu.THOIGIANHEN || '',
+            read: false
+        };
+
+        notifList.unshift(notif);
+        unreadCount++;
+        updateBadge();
+        renderNotifPanel();
+        hienToastDatBan(notif);
+    }
+
+    /**
+     * Xử lý gói phiếu đặt bàn từ máy chủ.
+     *
+     * Máy chủ gửi NGUYÊN danh sách phiếu đang chờ (không chỉ phiếu mới),
+     * nên phải tự lọc ra cái nào chưa từng báo. Cách này giống hệt cơ chế
+     * của new_order_paid và có ưu điểm: gửi lại nhiều lần vẫn an toàn.
+     */
+    function xuLyPhieuDatBan(danhSach) {
+        if (!Array.isArray(danhSach)) return;
+
+        const moc = docMocDatBan();
+        const sapXep = danhSach.slice().sort(
+            (a, b) => parseInt(a.MADATBAN) - parseInt(b.MADATBAN));
+        const maLonNhat = sapXep.reduce(
+            (m, p) => Math.max(m, parseInt(p.MADATBAN) || 0), 0);
+
+        if (moc === null) {
+            // Lần đầu dùng trên trình duyệt này: đánh dấu đã xem hết, tránh
+            // dội một loạt thông báo về các phiếu cũ.
+            sapXep.forEach(p => knownBookingIds.add(parseInt(p.MADATBAN)));
+            if (maLonNhat > 0) ghiMocDatBan(maLonNhat);
+            return;
+        }
+
+        let soMoi = 0;
+        sapXep.forEach(p => {
+            const id = parseInt(p.MADATBAN);
+            if (!knownBookingIds.has(id) && id > moc) {
+                knownBookingIds.add(id);
+                themThongBaoDatBan(p);
+                ghiMocDatBan(id);
+                soMoi++;
+            } else {
+                knownBookingIds.add(id);
+            }
+        });
+        if (soMoi > 0) console.log(`📅 ${soMoi} phiếu đặt bàn mới`);
+    }
+
+    function hienToastDatBan(n) {
+        const { gio, ngay } = tachGioNgayHen(n.thoiGianHen);
+
+        const toast = $(`
+            <div class="toast-notif pointer-events-auto flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-2xl text-white cursor-pointer"
+                 style="background:rgba(15,23,42,0.95);border:1px solid rgba(96,165,250,0.45);backdrop-filter:blur(16px);
+                        animation:slideInRight 0.4s ease forwards;min-width:280px;max-width:320px;">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-500/20">
+                    <i class="fa-solid fa-calendar-check text-blue-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-white">Có khách đặt bàn mới!</p>
+                    <p class="text-sm font-black text-blue-300 mt-0.5">${n.tenKhach}</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">${n.tenBan} · ${gio} ${ngay}${n.soKhach ? ' · ' + n.soKhach + ' khách' : ''}</p>
+                </div>
+                <i class="fa-solid fa-xmark text-gray-500 hover:text-white text-xs flex-shrink-0 toast-close"></i>
+            </div>
+        `);
+
+        $('#toastContainer').append(toast);
+        toast.find('.toast-close').click(function (e) {
+            e.stopPropagation();
+            toast.remove();
+        });
+        setTimeout(() => toast.fadeOut(300, () => toast.remove()), 7000);
+    }
+
     function updateBadge() {
         const badge = $('#notifBadge');
         if (unreadCount > 0) {
@@ -1099,8 +743,38 @@ $(document).ready(function() {
 
         let html = '';
         notifList.forEach(n => {
-            const isTransfer = n.phuongThuc === 'Chuyển khoản';
             const readClass = n.read ? 'opacity-60' : '';
+
+            // Thông báo đặt bàn có cấu trúc dữ liệu khác hẳn thông báo
+            // thanh toán, nên vẽ riêng thay vì cố nhồi vào cùng một khuôn.
+            if (n.loai === 'datban') {
+                const { gio, ngay } = tachGioNgayHen(n.thoiGianHen);
+                html += `
+                <div class="notif-item px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer ${readClass}" data-id="${n.id}">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-blue-500/20">
+                            <i class="fa-solid fa-calendar-check text-blue-400 text-xs"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs font-bold text-white">Đặt bàn mới · #${n.maPhieu}</p>
+                                ${!n.read ? '<span class="w-2 h-2 rounded-full bg-gold-400 flex-shrink-0 ml-1"></span>' : ''}
+                            </div>
+                            <p class="text-[11px] text-blue-300 font-bold mt-0.5">${n.tenKhach}${n.sdt ? ' · ' + n.sdt : ''}</p>
+                            <div class="flex items-center space-x-2 mt-1 flex-wrap">
+                                <span class="text-[10px] text-gray-500">${n.tenBan}</span>
+                                <span class="text-[10px] text-gray-600">•</span>
+                                <span class="text-[10px] text-gray-500">${gio} ${ngay}</span>
+                                ${n.soKhach ? '<span class="text-[10px] text-gray-600">•</span><span class="text-[10px] text-gray-500">' + n.soKhach + ' khách</span>' : ''}
+                            </div>
+                            ${n.ghiChu ? '<p class="text-[10px] text-gray-500 italic mt-1">“' + n.ghiChu + '”</p>' : ''}
+                        </div>
+                    </div>
+                </div>`;
+                return;
+            }
+
+            const isTransfer = n.phuongThuc === 'Chuyển khoản';
             html += `
                 <div class="notif-item px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer ${readClass}" data-id="${n.id}">
                     <div class="flex items-start space-x-3">
@@ -1274,6 +948,107 @@ $(document).ready(function() {
 
     // Khởi động hệ thống thông báo
     initNotifications();
+
+    // ============================================
+    // QUẢN LÝ LANDING PAGE (TAB LANDING)
+    // ============================================
+    function loadLandingConfig() {
+        const config = JSON.parse(localStorage.getItem('ROYAL_LANDING_CONFIG') || '{}');
+        $("#cfgHeroTitle").val(config.heroTitle || "Trải Nghiệm Ẩm Thực Đỉnh Cao & Sang Trọng");
+        $("#cfgHeroDesc").val(config.heroDesc || "Hương vị độc bản được chế tác tỉ mỉ bởi các đầu bếp hàng đầu trong không gian thượng hạng.");
+        $("#cfgHotline").val(config.hotline || "0909 123 456 — 028 3822 9999");
+        $("#cfgAddress").val(config.address || "123 Đường Hoàng Gia, Quận 1, TP. Hồ Chí Minh");
+        $("#cfgHours").val(config.hours || "Thứ 2 - Chủ Nhật: 10:00 AM - 11:00 PM");
+    }
+
+    $("#landingConfigForm").submit(function(e) {
+        e.preventDefault();
+        const config = {
+            heroTitle: $("#cfgHeroTitle").val().trim(),
+            heroDesc: $("#cfgHeroDesc").val().trim(),
+            hotline: $("#cfgHotline").val().trim(),
+            address: $("#cfgAddress").val().trim(),
+            hours: $("#cfgHours").val().trim()
+        };
+        localStorage.setItem('ROYAL_LANDING_CONFIG', JSON.stringify(config));
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Đã lưu cấu hình!',
+            text: 'Nội dung Landing Page đã được cập nhật thành công.',
+            timer: 1500,
+            showConfirmButton: false,
+            background: getSwalBg(),
+            color: getSwalColor()
+        });
+    });
+
+    $("#btnLandingAddDish").click(function() {
+        $("#btnAddDish").click();
+    });
+
+    function loadLandingDishPreviews() {
+        const container = $("#landingDishPreviewList");
+        container.html(`
+            <div class="text-center py-8 text-gray-500">
+                <i class="fa-solid fa-spinner fa-spin text-xl mb-2"></i>
+                <p class="text-xs">Đang tải thực đơn Landing Page...</p>
+            </div>
+        `);
+
+        $.ajax({
+            url: CONFIG.BASE_URL + "api/get_dishes.php",
+            type: "GET",
+            dataType: "json",
+            success: function(res) {
+                let list = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+                if (list.length === 0) {
+                    container.html(`
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fa-solid fa-utensils text-2xl mb-2 opacity-40"></i>
+                            <p class="text-xs">Chưa có món ăn nào trong hệ thống</p>
+                        </div>
+                    `);
+                    return;
+                }
+
+                let html = '';
+                list.forEach(dish => {
+                    const name = dish.TENMON || dish.tenMon || 'Món ăn';
+                    const price = Number(dish.GIATIEN || dish.giaTien || 0).toLocaleString('vi-VN') + 'đ';
+                    let img = dish.HINHANH || 'landing-page/assets/pho_bo.png';
+                    if (!img.startsWith('http') && !img.startsWith('assets/') && !img.startsWith('landing-page/')) {
+                        img = CONFIG.BASE_URL + img;
+                    }
+
+                    html += `
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-gold-400/10 hover:border-gold-400/30 transition-all">
+                            <div class="flex items-center space-x-3 min-w-0">
+                                <img src="${img}" alt="${name}" class="w-12 h-12 rounded-lg object-cover border border-white/10" onerror="this.src='landing-page/assets/pho_bo.png'">
+                                <div class="min-w-0">
+                                    <h5 class="text-sm font-bold text-white truncate">${name}</h5>
+                                    <p class="text-xs text-gold-400 font-semibold">${price}</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-500/20 text-green-400 border border-green-500/30">
+                                Đang Hiển Thị
+                            </span>
+                        </div>
+                    `;
+                });
+
+                container.html(html);
+            },
+            error: function() {
+                container.html(`
+                    <div class="text-center py-8 text-red-400">
+                        <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                        <p class="text-xs">Không thể kết nối máy chủ để lấy thực đơn</p>
+                    </div>
+                `);
+            }
+        });
+    }
 
 });
 
