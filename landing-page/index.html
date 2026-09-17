@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Restaurant — Nhà Hàng Hoàng Gia & Thượng Hạng</title>
+    <meta name="description" content="Thưởng thức ẩm thực đẳng cấp thượng hạng tại Royal Restaurant. Đặt bàn online nhanh chóng, không gian sang trọng, dịch vụ chuyên nghiệp.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- TailwindCSS CDN (Utility support) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css?v=2.0">
+</head>
+<body>
+
+    <!-- AMBIENT GLOW & GOLDEN DUST BACKGROUND -->
+    <div class="ambient-background">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+        <div id="goldParticles" class="particles-container"></div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo">
+                <div class="nav-logo-icon">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <div class="nav-logo-text">
+                    <h1>ROYAL</h1>
+                    <span>RESTAURANT</span>
+                </div>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="#hero" class="active">Trang Chủ</a></li>
+                <li><a href="#about">Về Chúng Tôi</a></li>
+                <li><a href="#menu">Thực Đơn</a></li>
+                <li><a href="#gallery">Không Gian</a></li>
+                <li><a href="#reservation">Đặt Bàn</a></li>
+            </ul>
+
+            <div class="nav-cta">
+                <a href="#reservation" class="btn-gold">
+                    <i class="fa-solid fa-calendar-check"></i> Đặt Bàn Ngay
+                </a>
+            </div>
+
+            <button class="mobile-toggle" id="mobileToggle">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MOBILE MENU OVERLAY -->
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="close-btn" id="closeMobileMenu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <a href="#hero">Trang Chủ</a>
+        <a href="#about">Về Chúng Tôi</a>
+        <a href="#menu">Thực Đơn</a>
+        <a href="#gallery">Không Gian</a>
+        <a href="#reservation">Đặt Bàn Online</a>
+    </div>
+
+    <!-- HERO SECTION -->
+    <header class="hero" id="hero">
+        <div class="hero-bg" style="background-image: url('images/hero.png');"></div>
+        <div class="hero-overlay"></div>
+        
+        <div class="hero-content">
+            <div class="hero-badge animate-on-scroll">
+                <i class="fa-solid fa-star"></i> Tinh Hoa Ẩm Thực Thượng Hạng
+            </div>
+            <h2 class="animate-on-scroll">
+                Trải Nghiệm Ẩm Thực <br>
+                <em>Đỉnh Cao & Sang Trọng</em>
+            </h2>
+            <p class="animate-on-scroll">
+                Hương vị độc bản được chế tác tỉ mỉ bởi các đầu bếp hàng đầu. Không gian hoàng gia ấm cúng, đẳng cấp dành riêng cho những khoảnh khắc đáng nhớ của bạn.
+            </p>
+            <div class="hero-actions animate-on-scroll">
+                <a href="#reservation" class="btn-gold">
+                    <i class="fa-solid fa-calendar-alt"></i> Đặt Bàn Ngay
+                </a>
+                <a href="#menu" class="btn-outline">
+                    <i class="fa-solid fa-book-open"></i> Khám Phá Thực Đơn
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <h3>15+</h3>
+                <p>Năm Kinh Nghiệm</p>
+            </div>
+            <div class="hero-stat">
+                <h3>50+</h3>
+                <p>Món Ăn Thượng Hạng</p>
+            </div>
+            <div class="hero-stat">
+                <h3>4.9★</h3>
+                <p>Đánh Giá Khách Hàng</p>
+            </div>
+        </div>
+
+        <div class="scroll-indicator">
+            <span>Cuộn Xuống</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </header>
+
+    <!-- MARQUEE FLOATING FOOD SHOWCASE -->
+    <section class="food-marquee-section">
+        <div class="marquee-container">
+            <div class="marquee-track marquee-left" id="marqueeTrack1">
+                <!-- Dynamically filled with food items -->
+            </div>
+            <div class="marquee-track marquee-right" id="marqueeTrack2">
+                <!-- Dynamically filled with food items -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section class="about-section" id="about">
+        <div class="section">
+            <div class="about-grid">
+                <div class="about-image animate-on-scroll">
+                    <img src="images/chef.png" alt="Royal Chef">
+                    <div class="about-image-badge">
+                        <h4>Michelin Standard</h4>
+                        <p>Đầu Bếp Trưởng Đẳng Cấp Quốc Tế</p>
+                    </div>
+                </div>
+
+                <div class="about-text animate-on-scroll">
+                    <div class="section-badge">
+                        <i class="fa-solid fa-crown"></i> Câu Chuyện Thương Hiệu
+                    </div>
+                    <h3>Hành Trình Kiến Tạo Hương Vị Hoàng Gia</h3>
+                    <p>
+                        Tại Royal Restaurant, mỗi món ăn không chỉ là một bữa ăn đơn thuần, mà là một tác phẩm nghệ thuật kết hợp giữa nguyên liệu tươi ngon nhất và kỹ thuật chế biến tinh tế.
+                    </p>
+                    <p>
+                        Chúng tôi tự hào mang đến cho quý khách không gian sang trọng, ấm cúng cùng phong cách phục vụ chu đáo, chuyên nghiệp chuẩn 5 sao.
+                    </p>
+
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <i class="fa-solid fa-leaf"></i>
+                            <span>Nguyên liệu 100% tươi sạch</span>
+                        </div>
+                        <div class="about-feature">
+                            <i class="fa-solid fa-wine-glass"></i>
+                            <span>Bộ sưu tập Vang thượng hạng</span>
+                        </div>
+                        <div class="about-feature">
+                            <i class="fa-solid fa-couch"></i>
+                            <span>Phòng VIP riêng tư đẳng cấp</span>
+                        </div>
+                        <div class="about-feature">
+                            <i class="fa-solid fa-award"></i>
+                            <span>Dịch vụ chuẩn 5 sao</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MENU SECTION -->
+    <section class="menu-section" id="menu">
+        <div class="section">
+            <div class="section-header animate-on-scroll">
+                <div class="section-badge">
+                    <i class="fa-solid fa-utensils"></i> Thực Đơn Đặc Biệt
+                </div>
+                <h3 class="section-title">Hương Vị Thượng Hạng</h3>
+                <div class="gold-line"></div>
+                <p class="section-desc">
+                    Tuyển tập những món ăn đặc sắc được thực khách yêu thích nhất tại Royal Restaurant.
+                </p>
+            </div>
+
+            <!-- Categories Filter -->
+            <div class="menu-categories animate-on-scroll" id="menuCategories">
+                <button class="cat-btn active" data-cat="all">
+                    <i class="fa-solid fa-utensils"></i> Tất cả món
+                </button>
+            </div>
+
+            <!-- Menu Grid loaded dynamically -->
+            <div class="menu-grid" id="menuGrid">
+                <!-- Dynamic cards loaded via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY SECTION -->
+    <section class="gallery-section" id="gallery">
+        <div class="section">
+            <div class="section-header animate-on-scroll">
+                <div class="section-badge">
+                    <i class="fa-solid fa-camera"></i> Không Gian Nhà Hàng
+                </div>
+                <h3 class="section-title">Sang Trọng & Ấm Cúng</h3>
+                <div class="gold-line"></div>
+                <p class="section-desc">
+                    Tận hưởng khoảnh khắc ấm áp cùng người thân và đối tác trong không gian bài trí tinh tế.
+                </p>
+            </div>
+
+            <div class="gallery-grid animate-on-scroll">
+                <div class="gallery-item">
+                    <img src="images/interior.png" alt="Không Gian Sang Trọng">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/menu_data/Com_Toi/Lau_Hai_San_250000.png" alt="Lẩu Hải Sản Hoàng Gia">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/menu_data/Com_Toi/Ca_Tai_Tuong_Chien_Xu_120000.png" alt="Cá Tai Tượng Chiên Xù">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/menu_data/Com_Trua/Com_Tam_Suon_Bi_Cha_45000.png" alt="Cơm Tấm Sườn Bì Chả">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/menu_data/Do_Ngot/Che_Thai_35000.png" alt="Chè Thái Trái Cây">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/menu_data/Bua_Sang/Pho_Bo_55000.png" alt="Phở Bò Thượng Hạng">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ONLINE RESERVATION SECTION -->
+    <section class="reservation-section" id="reservation">
+        <div class="section">
+            <div class="reservation-grid">
+                
+                <!-- Left Info Card -->
+                <div class="reservation-info animate-on-scroll">
+                    <div class="section-badge">
+                        <i class="fa-solid fa-calendar-check"></i> Đặt Bàn Trực Tuyến
+                    </div>
+                    <h3>Thưởng Thức Bữa Tối Hoàng Gia</h3>
+                    <p>Đặt bàn trước để nhận vị trí đẹp nhất và ưu đãi đặc biệt từ Royal Restaurant.</p>
+                    
+                    <div class="info-items">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fa-solid fa-location-dot"></i>
+                            </div>
+                            <div>
+                                <h4>Địa Chỉ Nhà Hàng</h4>
+                                <p>123 Đường Hoàng Gia, Quận 1, TP. Hồ Chí Minh</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div>
+                                <h4>Giờ Mở Cửa</h4>
+                                <p>Thứ 2 - Chủ Nhật: 08:00 AM - 10:30 PM</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fa-solid fa-phone-volume"></i>
+                            </div>
+                            <div>
+                                <h4>Hotline Hỗ Trợ 24/7</h4>
+                                <p>1900 888 999 - (028) 3838 9999</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Form -->
+                <div class="reservation-form animate-on-scroll">
+                    <h4 class="form-title">
+                        <i class="fa-solid fa-crown text-gold"></i> Đăng Ký Đặt Bàn
+                    </h4>
+                    
+                    <form id="bookingForm">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user"></i> Họ và Tên Khách Hàng *</label>
+                            <input type="text" id="bookingName" placeholder="Nhập họ và tên..." required>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-phone"></i> Số Điện Thoại *</label>
+                            <input type="tel" id="bookingPhone" placeholder="Nhập số điện thoại..." required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-calendar"></i> Ngày Đặt *</label>
+                                <input type="date" id="bookingDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-clock"></i> Giờ Hẹn *</label>
+                                <select id="bookingTime" required>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="17:30">05:30 PM</option>
+                                    <option value="18:30" selected>06:30 PM</option>
+                                    <option value="19:30">07:30 PM</option>
+                                    <option value="20:30">08:30 PM</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-users"></i> Số Lượng Khách</label>
+                            <select id="bookingGuests">
+                                <option value="1">1 Người</option>
+                                <option value="2" selected>2 Người (Cặp đôi)</option>
+                                <option value="4">4 Người (Gia đình)</option>
+                                <option value="6">6 Người (Bàn nhóm)</option>
+                                <option value="10">10+ Người (Tiệc VIP)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-comment-dots"></i> Yêu Cầu Đặc Biệt / Ghi Chú</label>
+                            <textarea id="bookingNote" placeholder="Ví dụ: Cần bàn gần cửa sổ, tiệc sinh nhật..."></textarea>
+                        </div>
+
+                        <button type="submit" class="form-submit">
+                            <i class="fa-solid fa-calendar-check"></i> Xác Nhận Đặt Bàn Ngay
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>ROYAL RESTAURANT</h3>
+                <p>Nơi tôn vinh giá trị ẩm thực thượng hạng và lưu giữ những khoảnh khắc trọn vẹn nhất.</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>Liên Kết Nhanh</h4>
+                <a href="#hero">Trang Chủ</a>
+                <a href="#about">Về Chúng Tôi</a>
+                <a href="#menu">Thực Đơn</a>
+                <a href="#reservation">Đặt Bàn Online</a>
+            </div>
+
+            <div class="footer-col">
+                <h4>Dành Cho Hệ Thống</h4>
+                <a href="../index.html"><i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập Quản Lý</a>
+                <a href="../cashier.html"><i class="fa-solid fa-cash-register"></i> Đăng Nhập Thu Ngân</a>
+            </div>
+
+            <div class="footer-col">
+                <h4>Hỗ Trợ</h4>
+                <a href="#">Chính Sách Bảo Mật</a>
+                <a href="#">Điều Khoản Dịch Vụ</a>
+                <a href="#">Tuyển Dụng</a>
+                <a href="#">Gửi Góp Ý</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2026 Royal Restaurant. All Rights Reserved. Powered by Royal POS Ecosystem.</p>
+            <p style="color: #D4AF37;"><i class="fa-solid fa-shield-halved"></i> Khóa Luận Tốt Nghiệp — Royal Restaurant POS</p>
+        </div>
+    </footer>
+
+    <!-- JQUERY & SWEETALERT2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- MAIN JS -->
+    <script src="js/main.js?v=2.0"></script>
+</body>
+</html>
