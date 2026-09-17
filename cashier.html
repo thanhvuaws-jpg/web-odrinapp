@@ -111,6 +111,34 @@
 
         /* Staggered Animation for list items */
         .stagger-item { opacity: 0; }
+
+        /* ------------------------------------------------------------------
+           SỬA LỖI KẸT ĐƠN — @keyframes fadeInUp phải khai báo ở ĐÂY.
+           ------------------------------------------------------------------
+           Trước đây fadeInUp chỉ được khai báo trong đối tượng cấu hình của
+           Tailwind CDN (tailwind.config.theme.extend.keyframes). Tailwind chỉ
+           sinh ra quy tắc @keyframes khi tìm thấy class utility tương ứng
+           (animate-fade-in-up) trong HTML. Nhưng renderList() lại gán trực tiếp
+           style.animation = "fadeInUp ..." nên Tailwind không hề biết tới và
+           KHÔNG sinh @keyframes.
+
+           Hậu quả: .stagger-item đặt opacity:0, animation đáng lẽ kéo về
+           opacity:1 thì không tồn tại => thẻ đơn nằm trong DOM, có kích thước,
+           có vị trí, nhưng VÔ HÌNH vĩnh viễn.
+
+           Vì sao lỗi lúc có lúc không: renderList(forceAnimate=false) đặt
+           opacity='1' trực tiếp nên hiện bình thường — đó là đường đi khi thu
+           ngân đang online và nhận sự kiện socket. Còn khi thu ngân đăng nhập
+           lại, switchTab() gọi fetchOrders(true) => forceAnimate=true => rơi
+           vào nhánh animation hỏng => danh sách trắng.
+
+           Khai báo ở khối <style> thuần đảm bảo quy tắc luôn tồn tại, không
+           phụ thuộc vào việc Tailwind có quét thấy class nào hay không.
+        */
+        @keyframes fadeInUp {
+            0%   { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
         
         /* Smooth transition for detail pane */
         #detailsContent { transition: opacity 0.4s ease, transform 0.4s ease; }
@@ -153,9 +181,61 @@
             table { width: 100%; border-collapse: collapse; }
             th, td { padding: 3px 0; }
         }
+
+        /* --- Ambient Background Effects --- */
+        .ambient-background {
+            position: fixed; inset: 0; z-index: -1;
+            pointer-events: none; overflow: hidden;
+        }
+        .glow-orb {
+            position: absolute; border-radius: 50%;
+            filter: blur(130px); opacity: 0.35;
+            animation: orbFloat 22s ease-in-out infinite alternate;
+        }
+        .orb-1 {
+            width: 600px; height: 600px; top: -100px; left: -100px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.45) 0%, rgba(170, 136, 17, 0.15) 60%, transparent 100%);
+            animation-duration: 22s;
+        }
+        .orb-2 {
+            width: 500px; height: 500px; top: 40%; right: -150px;
+            background: radial-gradient(circle, rgba(243, 229, 171, 0.35) 0%, rgba(168, 85, 247, 0.15) 70%, transparent 100%);
+            animation-duration: 18s; animation-delay: -6s;
+        }
+        .orb-3 {
+            width: 700px; height: 700px; bottom: -200px; left: 20%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(16, 185, 129, 0.15) 65%, transparent 100%);
+            animation-duration: 26s; animation-delay: -12s;
+        }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(60px, 80px) scale(1.15); }
+            100% { transform: translate(-40px, 40px) scale(0.92); }
+        }
+        .particles-container { position: absolute; inset: 0; }
+        .gold-particle {
+            position: absolute; border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, #F3E5AB 40%, #D4AF37 80%, transparent 100%);
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.9), 0 0 24px rgba(243, 229, 171, 0.6);
+            animation: particleRise linear infinite;
+        }
+        @keyframes particleRise {
+            0% { transform: translateY(105vh) scale(0.2) rotate(0deg); opacity: 0; }
+            15% { opacity: 0.85; }
+            85% { opacity: 0.7; }
+            100% { transform: translateY(-10vh) scale(1.3) rotate(360deg); opacity: 0; }
+        }
     </style>
 </head>
 <body class="text-slate-200 h-screen flex flex-col font-sans selection:bg-royal-gold selection:text-royal-900">
+
+    <!-- AMBIENT GLOW & GOLDEN DUST BACKGROUND -->
+    <div class="ambient-background">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+        <div id="goldParticles" class="particles-container"></div>
+    </div>
 
     <div class="bg-orb w-96 h-96 bg-purple-600 top-[-10%] left-[-10%] animate-blob"></div>
     <div class="bg-orb w-96 h-96 bg-blue-600 top-[20%] right-[-10%] animate-blob animation-delay-2000"></div>
@@ -365,6 +445,31 @@
                                 </button>
                             </div>
                             
+                            <!-- ═══════ MÃ GIẢM GIÁ ═══════
+                                 Đặt ngay trên nút thu tiền: khách đọc mã đúng
+                                 lúc thu ngân chuẩn bị bấm, nên ô nhập phải nằm
+                                 trong tầm mắt ở thời điểm đó. -->
+                            <div class="mb-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="relative flex-1">
+                                        <i class="fa-solid fa-ticket absolute left-3 top-1/2 -translate-y-1/2 text-royal-gold/50 text-sm"></i>
+                                        <input id="inputMaGiamGia" type="text" maxlength="20"
+                                               placeholder="Nhập mã giảm giá"
+                                               class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-9 pr-3
+                                                      text-white text-sm font-mono tracking-wider uppercase
+                                                      placeholder:text-slate-500 placeholder:font-sans placeholder:normal-case
+                                                      focus:outline-none focus:border-royal-gold/50 transition-colors">
+                                    </div>
+                                    <button id="btnApMa" onclick="apMaGiamGia()"
+                                            class="px-4 py-3 rounded-xl bg-royal-gold/15 border border-royal-gold/30
+                                                   text-royal-gold text-xs font-bold uppercase tracking-wide
+                                                   hover:bg-royal-gold/25 transition-colors whitespace-nowrap">
+                                        Áp mã
+                                    </button>
+                                </div>
+                                <div id="ketQuaMaGiamGia" class="hidden mt-2 text-xs font-bold"></div>
+                            </div>
+
                             <!-- Confirm Button -->
                             <button onclick="confirmPayment()" class="relative group overflow-hidden rounded-xl bg-gradient-to-r from-royal-gold to-yellow-600 p-[1px]">
                                 <span class="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-all duration-300"></span>
@@ -437,7 +542,7 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="js/config.js"></script>
+    <script src="js/config.js?v=1.1"></script>
     <script>
         // --- DATA & STATE ---
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -589,6 +694,28 @@
             elSearch.value = ''; // clear search
             lastRenderKey = ''; // Force rendering on tab switch
             fetchOrders(true); // pass true to trigger fadeInUp entrance animation
+        }
+
+        /**
+         * Trích "HH:MM" từ chuỗi thời gian dạng 'YYYY-MM-DD HH:MM:SS'.
+         *
+         * Trước đây viết trực tiếp:
+         *     order.NGAYDAT.split(' ')[1].substring(0, 5)
+         * Nếu chuỗi không chứa dấu cách thì split(' ')[1] là undefined, và
+         * .substring() trên undefined sẽ ném TypeError NGAY TRONG vòng lặp
+         * dựng danh sách — làm hỏng toàn bộ phần render, danh sách đơn
+         * trắng trơn mà không có thông báo lỗi nào trên giao diện.
+         *
+         * Sau khi chuyển NGAYDAT sang kiểu DATETIME (nhiệm vụ D1), MySQL
+         * luôn trả đúng định dạng nên rủi ro đã được chặn từ gốc. Hàm này
+         * là lớp phòng vệ thứ hai: một ô hiển thị '--:--' thì vô hại, còn
+         * một danh sách trắng thì làm nghiệp vụ đình trệ.
+         */
+        function layGioPhut(chuoiThoiGian) {
+            if (!chuoiThoiGian || typeof chuoiThoiGian !== 'string') return '--:--';
+            const phan = chuoiThoiGian.split(' ');
+            if (phan.length < 2 || !phan[1]) return '--:--';
+            return phan[1].substring(0, 5);
         }
 
         // --- FETCH REAL DATA FROM API ---
@@ -754,7 +881,7 @@
                     card.style.opacity = '1';
                 }
                 
-                const timeStr = currentTab === 'booking' ? (order.THOIGIANHEN ? order.THOIGIANHEN.split(' ')[1].substring(0, 5) : 'N/A') : (order.NGAYDAT ? order.NGAYDAT.split(' ')[1].substring(0, 5) : 'N/A');
+                const timeStr = layGioPhut(currentTab === 'booking' ? order.THOIGIANHEN : order.NGAYDAT);
                 
                 card.innerHTML = `
                     <div class="flex items-center space-x-4">
@@ -782,7 +909,15 @@
         function selectOrder(id) {
             const list = currentTab === 'pending' ? pendingOrders : (currentTab === 'completed' ? completedOrders : bookingOrders);
             selectedOrder = list.find(o => (currentTab === 'booking' ? o.MADATBAN : o.MADONDAT) == id);
-            
+
+            // Bỏ mã giảm giá đang áp khi chuyển sang đơn khác.
+            //
+            // Không có dòng này thì mã thu ngân vừa tra cho đơn A sẽ đi kèm
+            // đơn B khi họ bấm sang — giảm nhầm tiền cho nhầm khách, và mã
+            // bị tiêu mất trên hóa đơn không phải của chủ nó.
+            if (typeof goMaGiamGia === 'function') goMaGiamGia();
+
+
             // Re-render list to show active state
             renderList(elSearch.value, false);
             
@@ -1049,6 +1184,85 @@
             }
         }
 
+        /* ═══════════════════ MÃ GIẢM GIÁ ═══════════════════
+         *
+         * Mã đã được thu ngân xác nhận hợp lệ. null = chưa áp.
+         * Đặt ở phạm vi tệp chứ không gắn vào selectedOrder: khi thu ngân
+         * bấm sang đơn khác, mã phải bị bỏ chứ không đi theo.
+         */
+        let maDaAp = null;
+        let tienGiamMa = 0;
+
+        /**
+         * Tra mã TRƯỚC khi thu tiền.
+         *
+         * Không đánh dấu mã đã dùng ở bước này — việc đó xảy ra khi bấm
+         * "Đã thu tiền". Tách ra để thu ngân gõ nhầm một ký tự thì sửa được,
+         * chứ không phải hủy cả giao dịch.
+         */
+        function apMaGiamGia() {
+            if (!selectedOrder) return;
+
+            // Bấm lần hai khi đã áp = gỡ mã ra.
+            if (maDaAp) { goMaGiamGia(); return; }
+
+            const ma = ($('#inputMaGiamGia').val() || '').trim().toUpperCase();
+            if (!ma) { hienKetQuaMa('Vui lòng nhập mã giảm giá', false); return; }
+
+            $('#btnApMa').prop('disabled', true);
+            hienKetQuaMa('Đang kiểm tra mã…', true);
+
+            $.ajax({
+                url: CONFIG.BASE_URL + "api/kiem_tra_ma.php",
+                type: "GET",
+                data: { macode: ma, madondat: selectedOrder.MADONDAT },
+                dataType: "json",
+                success: function (res) {
+                    $('#btnApMa').prop('disabled', false);
+                    if (res.status !== 'success') {
+                        hienKetQuaMa(res.message || 'Mã không dùng được', false);
+                        return;
+                    }
+
+                    maDaAp = res.MACODE;
+                    tienGiamMa = res.TIENGIAM || 0;
+
+                    hienKetQuaMa(
+                        `✓ ${res.TEN} · giảm ${formatCurrency(tienGiamMa)}` +
+                        (res.CHU_MA ? ` · của ${res.CHU_MA}` : '') +
+                        `<br><span class="text-white">Còn lại: <b class="text-royal-gold">${formatCurrency(res.CON_LAI)}</b></span>`,
+                        true
+                    );
+
+                    // Khóa ô nhập: mã đã chốt, sửa tiếp chỉ gây nhầm giữa cái
+                    // đang gõ và cái thực sự sẽ được áp.
+                    $('#inputMaGiamGia').val(maDaAp).prop('disabled', true);
+                    $('#btnApMa').text('Gỡ mã');
+                },
+                error: function (xhr) {
+                    $('#btnApMa').prop('disabled', false);
+                    let msg = 'Không kiểm tra được mã';
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
+                    hienKetQuaMa(msg, false);
+                }
+            });
+        }
+
+        function goMaGiamGia() {
+            maDaAp = null;
+            tienGiamMa = 0;
+            $('#inputMaGiamGia').val('').prop('disabled', false);
+            $('#btnApMa').text('Áp mã');
+            $('#ketQuaMaGiamGia').addClass('hidden');
+        }
+
+        function hienKetQuaMa(html, tot) {
+            $('#ketQuaMaGiamGia')
+                .removeClass('hidden text-emerald-400 text-red-400')
+                .addClass(tot ? 'text-emerald-400' : 'text-red-400')
+                .html(html);
+        }
+
         function confirmPayment() {
             if(!selectedOrder) return;
 
@@ -1056,9 +1270,13 @@
             
             Swal.fire({
                 title: 'Xác nhận thanh toán',
-                html: `Thu tiền bàn <b>${selectedOrder.TENBAN}</b><br>
-                       Số tiền: <b style="color: #fbbf24; font-size: 1.2rem">${formatCurrency(selectedOrder.TONGTIEN)}</b><br>
-                       Hình thức: <b>${methodText}</b>`,
+                html: `Thu tiền bàn <b>${selectedOrder.TENBAN}</b><br>` +
+                      (maDaAp
+                        ? `Tạm tính: <s>${formatCurrency(selectedOrder.TONGTIEN)}</s><br>` +
+                          `Mã <b>${maDaAp}</b> giảm: <b style="color:#34d399">-${formatCurrency(tienGiamMa)}</b><br>` +
+                          `Thực thu: <b style="color:#fbbf24; font-size:1.3rem">${formatCurrency(Math.max(0, selectedOrder.TONGTIEN - tienGiamMa))}</b><br>`
+                        : `Số tiền: <b style="color: #fbbf24; font-size: 1.2rem">${formatCurrency(selectedOrder.TONGTIEN)}</b><br>`) +
+                      `Hình thức: <b>${methodText}</b>`,
                 icon: 'question',
                 background: '#1e293b',
                 color: '#fff',
@@ -1084,7 +1302,9 @@
                         type: "POST",
                         data: {
                             madondat: selectedOrder.MADONDAT,
-                            phuongthuc: selectedPaymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'
+                            phuongthuc: selectedPaymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+                            // Chuỗi rỗng khi không áp mã — máy chủ coi như không có.
+                            macode: maDaAp || ''
                         },
                         dataType: "json",
                         success: function(res) {
@@ -1189,9 +1409,13 @@
 
         // --- WEBSOCKET CONNECTION ---
         function initWebSocket() {
-            let socketUrl = window.location.origin.replace(":8081", "");
-            if (window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-                socketUrl = 'http://103.157.204.120';
+            // Socket.IO đi qua cùng origin với trang; Apache chuyển tiếp
+            // /socket.io/ sang container resto-socket. Đoạn cũ ghi cứng IP
+            // VPS và kích hoạt đúng khi hostname là localhost, khiến môi
+            // trường local luôn nối tới máy chủ nay đã bị hủy.
+            let socketUrl = window.location.origin;
+            if (window.location.protocol === 'file:') {
+                socketUrl = 'http://localhost:8000';
             }
             
             console.log('Connecting to WebSocket at:', socketUrl);
@@ -1218,6 +1442,25 @@
                 console.log('❌ Cashier WebSocket disconnected. Auto-reconnecting...');
             });
         }
+
+        function initGoldParticles() {
+            const container = document.getElementById('goldParticles');
+            if (!container) return;
+            container.innerHTML = '';
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'gold-particle';
+                const size = Math.random() * 4 + 2;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.left = `${Math.random() * 100}%`;
+                p.style.animationDuration = `${Math.random() * 15 + 10}s`;
+                p.style.animationDelay = `${Math.random() * 15}s`;
+                p.style.opacity = Math.random() * 0.7 + 0.3;
+                container.appendChild(p);
+            }
+        }
+        initGoldParticles();
     </script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/music-player.js?v=2.0"></script>
