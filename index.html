@@ -152,7 +152,38 @@
         .delay-300 { animation-delay: 300ms; }
         .delay-400 { animation-delay: 400ms; }
         
-        /* Hiệu ứng hạt bụi (particles) đơn giản bằng CSS */
+        /* --- Ambient Background Effects --- */
+        .ambient-background {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden;
+        }
+        .glow-orb {
+            position: absolute; border-radius: 50%;
+            filter: blur(130px); opacity: 0.35;
+            animation: orbFloat 22s ease-in-out infinite alternate;
+        }
+        .orb-1 {
+            width: 600px; height: 600px; top: -100px; left: -100px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.45) 0%, rgba(170, 136, 17, 0.15) 60%, transparent 100%);
+            animation-duration: 22s;
+        }
+        .orb-2 {
+            width: 500px; height: 500px; top: 40%; right: -150px;
+            background: radial-gradient(circle, rgba(243, 229, 171, 0.35) 0%, rgba(168, 85, 247, 0.15) 70%, transparent 100%);
+            animation-duration: 18s; animation-delay: -6s;
+        }
+        .orb-3 {
+            width: 700px; height: 700px; bottom: -200px; left: 20%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(220, 38, 38, 0.15) 65%, transparent 100%);
+            animation-duration: 26s; animation-delay: -12s;
+        }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(60px, 80px) scale(1.15); }
+            100% { transform: translate(-40px, 40px) scale(0.92); }
+        }
+        
+        /* Hiệu ứng hạt bụi (particles) nâng cấp */
         .particles {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -163,15 +194,17 @@
         
         .particle {
             position: absolute;
-            background: rgba(212, 175, 55, 0.4);
+            background: radial-gradient(circle, #ffffff 0%, #F3E5AB 40%, #D4AF37 80%, transparent 100%);
             border-radius: 50%;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.8), 0 0 20px rgba(243, 229, 171, 0.5);
             animation: floatUp linear infinite;
         }
         
         @keyframes floatUp {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+            0% { transform: translateY(105vh) scale(0.2) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.85; }
+            80% { opacity: 0.7; }
+            100% { transform: translateY(-10vh) scale(1.3) rotate(360deg); opacity: 0; }
         }
     </style>
 </head>
@@ -183,6 +216,13 @@
     
     <!-- Gradient Overlay -->
     <div class="absolute inset-0 z-0 overlay transition-colors duration-500"></div>
+
+    <!-- AMBIENT GLOW BACKGROUND -->
+    <div class="ambient-background">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+    </div>
     
     <!-- Particles Effect -->
     <div class="particles" id="particles">
@@ -284,7 +324,7 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="js/config.js"></script>
+    <script src="js/config.js?v=1.1"></script>
     <script src="js/login.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
