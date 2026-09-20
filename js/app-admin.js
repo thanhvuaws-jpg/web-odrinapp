@@ -29,6 +29,7 @@ import { TableScreen }    from './screens/TableScreen.js';
 import { BookingScreen }  from './screens/BookingScreen.js';
 import { VoucherScreen }  from './screens/VoucherScreen.js';
 import { ChatScreen }     from './screens/ChatScreen.js';
+import { KhoScreen }      from './screens/KhoScreen.js';
 
 /* ------------------------------------------------------------------ */
 /* Khởi tạo các màn hình                                               */
@@ -50,6 +51,7 @@ const manHinhBanAn  = new TableScreen();
 const manHinhDatBan = new BookingScreen();
 const manHinhVoucher = new VoucherScreen();
 const manHinhChat    = new ChatScreen();
+const manHinhKho     = new KhoScreen();
 
 /* ------------------------------------------------------------------ */
 /* Tab Thực đơn — gồm Danh mục và Món ăn                               */
@@ -155,6 +157,66 @@ document.addEventListener('admin:mo-tab-chat', async () => {
 // nhờ sự kiện socket, nên tắt vòng hỏi ở đây không làm mất thông báo.
 document.addEventListener('admin:roi-tab', (e) => {
     if (e.detail === 'chat') manHinhChat.tamDung();
+});
+
+/* ------------------------------------------------------------------ */
+/* Tab Kho nguyên vật liệu                                             */
+/* ------------------------------------------------------------------ */
+
+let daKhoiDongKho = false;
+
+document.addEventListener('admin:mo-tab-kho', async () => {
+    try {
+        if (!daKhoiDongKho) {
+            await manHinhKho.khoiDong();
+            daKhoiDongKho = true;
+        } else {
+            // Quay lại tab thì nạp lại: tồn kho đổi liên tục theo mỗi đơn
+            // được thanh toán, nên dữ liệu cũ từ vài phút trước đã sai.
+            await manHinhKho.nap();
+        }
+    } catch (e) {
+        console.error('Không mở được màn hình kho:', e);
+    }
+});
+
+/* ------------------------------------------------------------------ */
+/* Huy hiệu kho — chạy kể cả khi tab kho đóng                          */
+/* ------------------------------------------------------------------ */
+//
+// Cùng lý do với huy hiệu chat: không ai mở tab kho để kiểm tra xem có
+// cần mở tab kho hay không. Hết nguyên liệu giữa ca là chuyện phải biết
+// ngay, không phải chuyện phát hiện lúc bếp gọi lên.
+
+async function capNhatHuyHieuKho() {
+    try {
+        const kq = await ApiClient.layDanhSach('kho_nguyenlieu.php', { chi_canh_bao: '1' });
+        const o = document.getElementById('navKhoHuyHieu');
+        if (!o) return;
+
+        const n = kq.so_nguyen_lieu || 0;
+        const coAm = (kq.dem && kq.dem.am) > 0;
+
+        if (n > 0) {
+            o.textContent = n > 99 ? '99+' : String(n);
+            // Tồn âm nghĩa là sổ sách sai, nặng hơn hết hàng — đổi màu để
+            // phân biệt ngay từ thanh điều hướng.
+            o.classList.toggle('bg-red-600', coAm);
+            o.classList.toggle('bg-orange-500', !coAm);
+            o.classList.remove('hidden');
+        } else {
+            o.classList.add('hidden');
+        }
+    } catch (e) {
+        // Chỉ báo phụ — mạng chớp một nhịp thì không đáng làm phiền.
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    capNhatHuyHieuKho();
+    // Thưa hơn huy hiệu chat nhiều: tồn kho không đổi theo từng giây, và
+    // truy vấn này quét cả bảng nguyên liệu.
+    setInterval(capNhatHuyHieuKho, 120000);
 });
 
 /* ------------------------------------------------------------------ */

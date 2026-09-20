@@ -141,6 +141,12 @@ $(document).ready(function() {
     // Trước đây dòng này truyền `this` (thẻ <a>) vào chỗ tham số `title`, nên
     // tiêu đề trang hiện ra "[object HTMLAnchorElement]" còn phụ đề thì giữ
     // nguyên của tab trước. Sửa lại cho đúng chữ ký ba tham số.
+    $("#nav-kho").click(function(e) {
+        e.preventDefault();
+        switchTab('kho', 'Kho Nguyên Vật Liệu',
+            'Tồn kho, nhập hàng, xuất cho bếp, hủy hàng và kiểm kê');
+    });
+
     $("#nav-vouchers").click(function(e) {
         e.preventDefault();
         switchTab('vouchers', 'Quản Lý Voucher',
@@ -181,6 +187,7 @@ $(document).ready(function() {
         $("#tab-staff-content").addClass("hidden");
         $("#tab-tables-content").addClass("hidden");
         $("#tab-bookings-content").addClass("hidden");
+        $("#tab-kho-content").addClass("hidden");
         $("#tab-vouchers-content").addClass("hidden");
         $("#tab-chat-content").addClass("hidden");
         $("#tab-landing-content").addClass("hidden");
@@ -197,6 +204,8 @@ $(document).ready(function() {
             document.dispatchEvent(new CustomEvent('admin:mo-tab-ban-an'));
         } else if (tab === 'bookings') {
             document.dispatchEvent(new CustomEvent('admin:mo-tab-dat-ban'));
+        } else if (tab === 'kho') {
+            document.dispatchEvent(new CustomEvent('admin:mo-tab-kho'));
         } else if (tab === 'vouchers') {
             document.dispatchEvent(new CustomEvent('admin:mo-tab-voucher'));
         } else if (tab === 'chat') {

@@ -244,6 +244,18 @@
                 <i class="fa-solid fa-calendar-check text-lg w-6 text-center"></i>
                 <span class="tracking-wide text-sm">Đặt bàn</span>
             </a>
+            <a href="#" id="nav-kho" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
+                <i class="fa-solid fa-warehouse text-lg w-6 text-center"></i>
+                <span class="tracking-wide text-sm">Kho nguyên liệu</span>
+                <!--
+                    Huy hieu so nguyen lieu can chu y (het / sap het / ton am).
+                    Cap nhat ke ca khi tab dong, cung ly do voi huy hieu chat:
+                    khong ai mo tab kho de kiem tra xem co can mo tab kho khong.
+                -->
+                <span id="navKhoHuyHieu"
+                      class="hidden ml-auto min-w-5 h-5 px-1.5 rounded-full bg-orange-500
+                             text-white text-[11px] font-bold grid place-items-center"></span>
+            </a>
             <a href="#" id="nav-vouchers" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
                 <i class="fa-solid fa-ticket text-lg w-6 text-center"></i>
                 <span class="tracking-wide text-sm">Voucher</span>
@@ -543,6 +555,9 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ================= TAB: KHO NGUYEN LIEU ================= -->
+            <div id="tab-kho-content" class="hidden tab-content"></div>
 
             <div id="tab-vouchers-content" class="hidden">
             <div class="flex items-center justify-between mb-5">
