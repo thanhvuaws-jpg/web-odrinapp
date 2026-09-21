@@ -570,7 +570,11 @@ $(document).ready(function() {
         const notif = {
             loai: 'don',                 // phân biệt với thông báo đặt bàn
             id: 'don-' + order.MADONDAT,
-            tenBan: order.TENBAN,
+            // Đơn không gắn bàn (MABAN = NULL) là hợp lệ trong CSDL — ví dụ
+            // đơn mô phỏng từ màn kho. Không có dự phòng thì thông báo hiện
+            // nguyên văn "null vừa thanh toán xong!". Phần phiếu đặt bàn bên
+            // dưới đã xử lý đúng kiểu này từ trước; chỉ phần đơn hàng quên.
+            tenBan: order.TENBAN || ('Đơn #' + order.MADONDAT),
             tongTien: order.TONGTIEN,
             nhanVien: order.HOTENNV,
             phuongThuc: order.PHUONGTHUCTT || 'Tiền mặt',

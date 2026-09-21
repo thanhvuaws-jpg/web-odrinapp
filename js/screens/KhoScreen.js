@@ -1,6 +1,8 @@
 import { ApiClient } from '../core/ApiClient.js';
 import { Dialog }    from '../core/Dialog.js';
 import { Formatter } from '../core/Formatter.js';
+import { HieuUngRoi } from '../core/HieuUngRoi.js';
+import { DuBaoPanel } from './DuBaoPanel.js';
 
 /**
  * KhoScreen — màn hình kho nguyên vật liệu cho trang quản trị.
@@ -35,14 +37,21 @@ import { Formatter } from '../core/Formatter.js';
  */
 export class KhoScreen {
 
+    /** Hỏi lượt trừ kho mới mỗi bao lâu khi tab đang mở. */
+    static CHU_KY_MS = 2500;
+
     constructor() {
-        this.tabCon      = 'ton';     // ton | nhap | xuat | huy
+        this.tabCon      = 'ton';     // ton | nhap | xuat | huy | dubao
         this.nguyenLieu  = [];
         this.nhom        = [];
         this.thongKe     = null;
         this.boLoc       = { manhom: '', tukhoa: '', chi_canh_bao: false };
         this.dongPhieu   = [];        // dòng hàng của phiếu đang soạn
         this._daGan      = false;
+        this._mocSoKho   = 0;         // MASO lớn nhất đã thấy
+        this._henHoi     = null;
+        this._dangHoi    = false;
+        this.duBao       = new DuBaoPanel(this);
     }
 
     /* ══════════════════════════ Vòng đời ══════════════════════════ */
@@ -51,6 +60,171 @@ export class KhoScreen {
         this._veKhung();
         this._ganSuKien();
         await this.nap();
+        this.batDauTheoDoi();
+    }
+
+    /* ══════════════════ Theo dõi lượt trừ kho mới ══════════════════
+     *
+     * Hỏi lại định kỳ chứ không dùng socket: lượt trừ kho sinh ra trong
+     * `checkout_order.php`, một tệp PHP không nói chuyện được với máy chủ
+     * socket. Thêm đường báo socket từ PHP là thêm một mắt xích có thể đứt
+     * lặng lẽ, trong khi một câu SELECT theo MASO mỗi 2,5 giây thì rẻ và
+     * không bao giờ bỏ sót.
+     *
+     * Chỉ chạy khi tab kho đang mở — cùng lý do với hộp thư chăm sóc khách
+     * hàng: trang quản trị mở suốt ca sẽ gọi mạng hàng nghìn lần cho một
+     * tab không ai nhìn.
+     */
+    async batDauTheoDoi() {
+        this.tamDung();
+        try {
+            // Lần đầu chỉ lấy mốc. Không vậy thì mở tab ra là cả trăm lượt
+            // trừ kho trong quá khứ đổ xuống màn hình cùng lúc.
+            const kq = await ApiClient.layDanhSach('kho_nguyenlieu.php',
+                                                   { action: 'bien_dong_moi', tu_maso: 0 });
+            this._mocSoKho = kq.moc || 0;
+        } catch (e) { /* hỏi lại ở nhịp sau */ }
+        this._henHoi = setInterval(() => this._hoiBienDong(), KhoScreen.CHU_KY_MS);
+    }
+
+    tamDung() {
+        if (this._henHoi) clearInterval(this._henHoi);
+        this._henHoi = null;
+    }
+
+    async _hoiBienDong() {
+        // Mạng chậm thì lượt hỏi trước chưa xong lượt sau đã tới — hai lượt
+        // cùng mang một mốc sẽ trả về cùng một lượt trừ kho, và ảnh rơi hai lần.
+        if (this._dangHoi || !this._mocSoKho) return;
+        this._dangHoi = true;
+        try {
+            const kq = await ApiClient.layDanhSach('kho_nguyenlieu.php',
+                                   { action: 'bien_dong_moi', tu_maso: this._mocSoKho });
+            if (kq.danh_sach && kq.danh_sach.length) this._apDungBienDong(kq.danh_sach);
+            this._mocSoKho = Math.max(this._mocSoKho, kq.moc || 0);
+        } catch (e) {
+            // Im lặng: đây là phần trang trí thời gian thực. Mạng chớp một
+            // nhịp thì nhịp sau hỏi bù — mốc chưa tăng nên không mất lượt nào.
+        } finally {
+            this._dangHoi = false;
+        }
+    }
+
+    /**
+     * Áp một loạt lượt trừ kho lên màn hình: ảnh rơi, thẻ rung, số đếm lùi.
+     *
+     * Cập nhật TẠI CHỖ từng thẻ, không vẽ lại cả danh sách: vẽ lại thì mất
+     * vị trí xuất phát của ảnh rơi và mất luôn hiệu ứng rung, trong khi chỉ
+     * vài thẻ thực sự thay đổi.
+     */
+    _apDungBienDong(ds) {
+        // Gộp theo nguyên liệu: một đơn 2 tô phở + 1 bún bò trừ xương ống hai
+        // lần, gộp lại thì rơi một lượt cho gọn thay vì hai lượt dồn nhau.
+        const theoNL  = new Map();
+        const theoDon = new Map();
+        for (const r of ds) {
+            const cu = theoNL.get(r.MANL);
+            if (cu) {
+                cu.THAYDOI = +cu.THAYDOI + +r.THAYDOI;
+                cu.TON_SAU = r.TON_SAU;
+                cu.TINHTRANG_TON = r.TINHTRANG_TON;
+            } else {
+                theoNL.set(r.MANL, { ...r });
+            }
+            if (r.LOAI_PHIEU === 'DONDAT') {
+                if (!theoDon.has(r.MAPHIEU)) theoDon.set(r.MAPHIEU, new Set());
+                theoDon.get(r.MAPHIEU).add(r.TENNL);
+            }
+        }
+
+        let i = 0;
+        for (const r of theoNL.values()) {
+            // So le giữa các nguyên liệu: tất cả rơi cùng một khoảnh khắc thì
+            // mắt không kịp thấy từng thứ là gì.
+            setTimeout(() => this._roiMotNguyenLieu(r), i++ * 140);
+        }
+
+        for (const [maDon, tenNL] of theoDon) {
+            const ten = [...tenNL];
+            HieuUngRoi.thongBao(
+                `<b>Đơn #${maDon}</b> vừa bán — trừ ${ten.length} nguyên liệu` +
+                `<div class="phu">${ten.slice(0, 5).map(t => Formatter.an(t)).join(' · ')}` +
+                `${ten.length > 5 ? ' …' : ''}</div>`);
+        }
+
+        // Thẻ tóm tắt đếm theo toàn kho, không suy ra được từ vài dòng vừa
+        // nhận — hỏi lại một lần, sau khi ảnh đã rơi xong.
+        clearTimeout(this._henTomTat);
+        this._henTomTat = setTimeout(() => this._napLaiTomTat(), 1800);
+    }
+
+    _roiMotNguyenLieu(r) {
+        const url = r.LOAI_ANH === 'anh_ngoai'  ? r.URL_ANH
+                  : r.LOAI_ANH === 'anh_noi_bo' ? ApiClient.TIEN_TO + r.URL_ANH
+                  : null;
+        const luong = Math.abs(+r.THAYDOI);
+
+        // Số hạt theo lượng trừ, không cố định: trừ 12 quả trứng mà chỉ rơi
+        // một hạt thì không ai thấy khác gì trừ một nhúm quế.
+        const demDuoc = ['quả', 'cái', 'gói', 'lon', 'chai', 'hộp', 'bó'].includes(r.DONVI);
+        const soHat = demDuoc
+            ? Math.min(5, Math.max(2, Math.round(luong)))
+            : 2 + (luong >= 0.1 ? 1 : 0) + (luong >= 0.4 ? 1 : 0) + (luong >= 1 ? 1 : 0);
+
+        const the = document.querySelector(`#tab-kho-content .kho-the[data-manl="${r.MANL}"]`);
+        if (the) {
+            const oAnh = the.querySelector('.kho-anh');
+            HieuUngRoi.roi(url, this.chuDau(r.TENNL), (oAnh || the).getBoundingClientRect(), soHat);
+            HieuUngRoi.rungThe(the);
+
+            const oSo = the.querySelector('.kho-so');
+            const truoc = parseFloat((oSo?.textContent || '0').replace(',', '.')) || 0;
+            HieuUngRoi.demLui(oSo, truoc, parseFloat(r.TON_SAU), v => this.soDep(v));
+
+            const pill = the.querySelector('.kho-pill');
+            if (pill) {
+                const k = this._kieuTon(r.TINHTRANG_TON);
+                pill.className = 'kho-pill inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5 ' +
+                                 'rounded-full border ' + k.lop;
+                pill.textContent = k.nhan;
+            }
+        } else {
+            // Nguyên liệu đang bị bộ lọc ẩn, hoặc đang ở thẻ con khác: vẫn
+            // cho rơi, từ mép trên vùng nội dung. Lượt trừ kho vẫn xảy ra
+            // thật — giấu đi thì người đứng xem không biết kho vừa động.
+            const vung = document.getElementById('khoNoiDung')?.getBoundingClientRect();
+            if (vung) {
+                const o = { left: vung.left + Math.random() * vung.width * 0.8,
+                            top: vung.top, width: 60, height: 60 };
+                HieuUngRoi.roi(url, this.chuDau(r.TENNL), o, soHat);
+            }
+        }
+
+        const nl = this.nguyenLieu.find(n => +n.MANL === +r.MANL);
+        if (nl) { nl.TON_HIENTAI = r.TON_SAU; nl.TINHTRANG_TON = r.TINHTRANG_TON; }
+    }
+
+    async _napLaiTomTat() {
+        if (this.tabCon !== 'ton') return;
+        try {
+            const kq = await ApiClient.layDanhSach('kho_nguyenlieu.php');
+            this.thongKe = { dem: kq.dem, gia_tri_ton: kq.gia_tri_ton, so: kq.so_nguyen_lieu };
+            this._veTheTomTat();
+        } catch (e) { /* bỏ qua */ }
+    }
+
+    /** Bán một đơn mô phỏng để xem hiệu ứng, không cần cầm điện thoại. */
+    async moPhongDon() {
+        const nut = document.querySelector('#tab-kho-content [data-hanhdong="mo-phong"]');
+        if (nut) nut.disabled = true;
+        try {
+            await ApiClient.ghi('kho_nguyenlieu.php', { action: 'mo_phong_don', so_mon: 3 });
+            // Hỏi ngay, không đợi nhịp kế tiếp: bấm nút mà 2 giây sau mới có
+            // gì xảy ra thì trông như nút hỏng.
+            await this._hoiBienDong();
+        } finally {
+            if (nut) setTimeout(() => { nut.disabled = false; }, 600);
+        }
     }
 
     async nap() {
@@ -68,6 +242,8 @@ export class KhoScreen {
             this.nguyenLieu = kq.danh_sach || [];
             this.thongKe    = { dem: kq.dem, gia_tri_ton: kq.gia_tri_ton, so: kq.so_nguyen_lieu };
             this._veTonKho();
+        } else if (this.tabCon === 'dubao') {
+            await this.duBao.nap();
         } else {
             const kq = await ApiClient.layDanhSach('kho_phieu.php', { loai: this.tabCon });
             this._vePhieu(kq);
@@ -98,6 +274,7 @@ export class KhoScreen {
               ${tab('nhap','Nhập hàng','fa-truck-ramp-box')}
               ${tab('xuat','Xuất kho','fa-utensils')}
               ${tab('huy','Hủy hàng','fa-trash-can')}
+              ${tab('dubao','Dự báo đặt hàng','fa-chart-line')}
             </div>
 
             <div id="khoThanh" class="flex flex-wrap gap-3 items-center"></div>
@@ -129,6 +306,10 @@ export class KhoScreen {
         });
 
         o.addEventListener('input', (e) => {
+            if (e.target.dataset.dubaoManl) {
+                this.duBao.suaSoLuong(parseInt(e.target.dataset.dubaoManl, 10), e.target.value);
+                return;
+            }
             if (e.target.id === 'khoTimKiem') {
                 clearTimeout(this._hoan);
                 this._hoan = setTimeout(() => {
@@ -139,6 +320,10 @@ export class KhoScreen {
         });
 
         o.addEventListener('change', (e) => {
+            if (e.target.dataset.hanhdong === 'dubao-chon-ngay' && e.target.value) {
+                this.duBao.nap(e.target.value).catch(err => Dialog.loiApi(err));
+                return;
+            }
             if (e.target.id === 'khoLocNhom') {
                 this.boLoc.manhom = e.target.value;
                 this.nap().catch(err => Dialog.loiApi(err));
@@ -158,6 +343,9 @@ export class KhoScreen {
             case 'lich-su':    return this.xemLichSu(parseInt(d.manl, 10));
             case 'kiem-ke':    return this.moKiemKe();
             case 'doi-chieu':  return this.doiChieu();
+            case 'mo-phong':   return this.moPhongDon();
+            case 'dubao-ngay': return this.duBao.nap(d.ngay);
+            case 'dubao-chot': return this.duBao.chot();
         }
     }
 
@@ -185,6 +373,11 @@ export class KhoScreen {
                      class="accent-gold-400"> Chỉ thứ cần chú ý
             </label>
             <div class="ml-auto flex gap-2">
+              <button data-hanhdong="mo-phong"
+                class="px-4 py-2 rounded-lg border border-gold-400/30 text-gold-400 text-sm
+                       font-bold hover:bg-gold-400/10 transition-all disabled:opacity-50"
+                title="Bán thử một đơn để xem kho bị trừ">
+                <i class="fa-solid fa-play mr-1.5"></i>Mô phỏng 1 đơn</button>
               <button data-hanhdong="kiem-ke"
                 class="px-4 py-2 rounded-lg bg-gold-400 text-royal-900 text-sm font-bold
                        hover:bg-gold-300 transition-all">
@@ -238,22 +431,34 @@ export class KhoScreen {
              </div>`;
     }
 
-    _dongNguyenLieu(n) {
-        // Tên lớp Tailwind phải là chuỗi ĐẦY ĐỦ, không ghép động. Tailwind
-        // quét mã nguồn để sinh CSS nên `text-${x}-400` không bao giờ được
-        // tạo ra — dự án đã vấp lỗi này bốn lần (QĐ-024, 071, 074, 081).
-        const kieu = {
+    /**
+     * Nhãn và lớp màu cho tình trạng tồn.
+     *
+     * Tên lớp Tailwind phải là chuỗi ĐẦY ĐỦ, không ghép động. Tailwind quét
+     * mã nguồn để sinh CSS nên `text-${x}-400` không bao giờ được tạo ra —
+     * dự án đã vấp lỗi này bốn lần (QĐ-024, 071, 074, 081).
+     */
+    _kieuTon(tt) {
+        return {
             am:      { nhan: 'Tồn âm',  lop: 'bg-red-500/15 text-red-400 border-red-500/30' },
             het:     { nhan: 'Hết',     lop: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
             sap_het: { nhan: 'Sắp hết', lop: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
             du:      { nhan: 'Đủ',      lop: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' }
-        }[n.TINHTRANG_TON] || { nhan: '—', lop: 'bg-gray-500/15 text-gray-400 border-gray-500/30' };
+        }[tt] || { nhan: '—', lop: 'bg-gray-500/15 text-gray-400 border-gray-500/30' };
+    }
 
+    _dongNguyenLieu(n) {
+        const kieu = this._kieuTon(n.TINHTRANG_TON);
+
+        // data-manl + các lớp kho-anh / kho-so / kho-pill: để khi có lượt
+        // trừ kho mới, hiệu ứng tìm đúng thẻ mà rung, đếm lùi số, và cho ảnh
+        // rơi ra từ đúng chỗ — không phải vẽ lại cả danh sách.
         return `
-          <div class="flex items-center gap-3 bg-black/20 border border-gold-400/10
+          <div data-manl="${n.MANL}"
+               class="kho-the flex items-center gap-3 bg-black/20 border border-gold-400/10
                       rounded-xl px-4 py-3 hover:border-gold-400/30 transition-all">
-            <div class="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-black/30 grid place-items-center">
-              ${this.anhNguyenLieu(n, 34)}
+            <div class="kho-anh w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-black/30 grid place-items-center">
+              ${this.anhNguyenLieu(n)}
             </div>
             <div class="flex-1 min-w-0">
               <div class="font-semibold truncate">${Formatter.an(n.TENNL)}</div>
@@ -264,10 +469,10 @@ export class KhoScreen {
             </div>
             <div class="text-right shrink-0">
               <div class="font-bold ${n.TINHTRANG_TON === 'am' ? 'text-red-400' : ''}">
-                ${this.soDep(n.TON_HIENTAI)}
+                <span class="kho-so">${this.soDep(n.TON_HIENTAI)}</span>
                 <span class="text-xs text-gray-400">${Formatter.an(n.DONVI)}</span>
               </div>
-              <span class="inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5
+              <span class="kho-pill inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5
                            rounded-full border ${kieu.lop}">${kieu.nhan}</span>
             </div>
             <button data-hanhdong="lich-su" data-manl="${n.MANL}"

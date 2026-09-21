@@ -174,10 +174,20 @@ document.addEventListener('admin:mo-tab-kho', async () => {
             // Quay lại tab thì nạp lại: tồn kho đổi liên tục theo mỗi đơn
             // được thanh toán, nên dữ liệu cũ từ vài phút trước đã sai.
             await manHinhKho.nap();
+            // Lấy mốc MỚI rồi mới theo dõi tiếp — không lấy mốc cũ lúc rời
+            // tab, nếu không mọi lượt trừ kho trong lúc vắng mặt sẽ rơi dồn
+            // xuống một lượt khi quay lại.
+            manHinhKho.batDauTheoDoi();
         }
     } catch (e) {
         console.error('Không mở được màn hình kho:', e);
     }
+});
+
+// Rời tab kho thì dừng vòng hỏi lượt trừ kho — không ai nhìn thì không cần
+// ảnh rơi, và không đáng gọi mạng mỗi 2,5 giây suốt cả ca.
+document.addEventListener('admin:roi-tab', (e) => {
+    if (e.detail === 'kho') manHinhKho.tamDung();
 });
 
 /* ------------------------------------------------------------------ */
