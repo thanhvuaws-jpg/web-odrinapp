@@ -3,6 +3,9 @@ import { Dialog }    from '../core/Dialog.js';
 import { Formatter } from '../core/Formatter.js';
 import { HieuUngRoi } from '../core/HieuUngRoi.js';
 import { DuBaoPanel } from './DuBaoPanel.js';
+import { NguyenLieuScreen } from './NguyenLieuScreen.js';
+import { DinhLuongScreen }  from './DinhLuongScreen.js';
+import { HanSuDungPanel }   from './HanSuDungPanel.js';
 
 /**
  * KhoScreen — màn hình kho nguyên vật liệu cho trang quản trị.
@@ -41,7 +44,7 @@ export class KhoScreen {
     static CHU_KY_MS = 2500;
 
     constructor() {
-        this.tabCon      = 'ton';     // ton | nhap | xuat | huy | dubao
+        this.tabCon      = 'ton';     // ton | nhap | xuat | huy | nguyenlieu | dinhluong | hansudung | dubao
         this.nguyenLieu  = [];
         this.nhom        = [];
         this.thongKe     = null;
@@ -52,6 +55,9 @@ export class KhoScreen {
         this._henHoi     = null;
         this._dangHoi    = false;
         this.duBao       = new DuBaoPanel(this);
+        this.manHinhNL   = new NguyenLieuScreen();
+        this.manHinhDL   = new DinhLuongScreen(this);
+        this.panelHSD    = new HanSuDungPanel(this);
     }
 
     /* ══════════════════════════ Vòng đời ══════════════════════════ */
@@ -244,6 +250,18 @@ export class KhoScreen {
             this._veTonKho();
         } else if (this.tabCon === 'dubao') {
             await this.duBao.nap();
+        } else if (this.tabCon === 'nguyenlieu') {
+            this._veKhungNguyenLieu();
+            await this.manHinhNL.napNhom();
+            await this.manHinhNL.khoiDong();
+        } else if (this.tabCon === 'dinhluong') {
+            const thanh = document.getElementById('khoThanh');
+            if (thanh) thanh.innerHTML = '';
+            await this.manHinhDL.khoiDong(document.getElementById('khoNoiDung'));
+        } else if (this.tabCon === 'hansudung') {
+            const thanh = document.getElementById('khoThanh');
+            if (thanh) thanh.innerHTML = '';
+            await this.panelHSD.khoiDong(document.getElementById('khoNoiDung'));
         } else {
             const kq = await ApiClient.layDanhSach('kho_phieu.php', { loai: this.tabCon });
             this._vePhieu(kq);
@@ -267,13 +285,16 @@ export class KhoScreen {
 
         o.innerHTML = `
           <div class="space-y-6">
-            <div id="khoTheTomTat" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            <div id="khoTheTomTat" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3"></div>
 
             <div class="border-b border-gold-400/10 flex gap-1 overflow-x-auto">
               ${tab('ton','Tồn kho','fa-boxes-stacked')}
               ${tab('nhap','Nhập hàng','fa-truck-ramp-box')}
               ${tab('xuat','Xuất kho','fa-utensils')}
               ${tab('huy','Hủy hàng','fa-trash-can')}
+              ${tab('nguyenlieu','Nguyên liệu','fa-cubes')}
+              ${tab('dinhluong','Định lượng','fa-mortar-pestle')}
+              ${tab('hansudung','Cảnh báo hạn','fa-calendar-xmark')}
               ${tab('dubao','Dự báo đặt hàng','fa-chart-line')}
             </div>
 
@@ -346,7 +367,41 @@ export class KhoScreen {
             case 'mo-phong':   return this.moPhongDon();
             case 'dubao-ngay': return this.duBao.nap(d.ngay);
             case 'dubao-chot': return this.duBao.chot();
+            case 'nl-them':    return this.manHinhNL.moFormThem();
+            case 'nl-che-do': {
+                const xemNgung = d.ngung === '1';
+                await this.manHinhNL.chuyenCheDo(xemNgung);
+                this._veKhungNguyenLieu();
+                return;
+            }
+            case 'mo-tab-hansudung': {
+                this.tabCon = 'hansudung';
+                this._veKhung();
+                return this.nap();
+            }
         }
+    }
+
+    _veKhungNguyenLieu() {
+        const thanh = document.getElementById('khoThanh');
+        if (thanh) thanh.innerHTML = `
+            <div class="flex items-center gap-2">
+                <button data-hanhdong="nl-che-do" data-ngung="0"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!this.manHinhNL.xemDaNgung ? 'bg-gold-400 text-royal-900 shadow-sm' : 'bg-black/30 border border-white/10 text-gray-400 hover:text-white'}">
+                    <i class="fa-solid fa-boxes-stacked mr-1"></i>Đang sử dụng
+                </button>
+                <button data-hanhdong="nl-che-do" data-ngung="1"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${this.manHinhNL.xemDaNgung ? 'bg-gold-400 text-royal-900 shadow-sm' : 'bg-black/30 border border-white/10 text-gray-400 hover:text-white'}">
+                    <i class="fa-solid fa-ban mr-1"></i>Đã ngừng sử dụng
+                </button>
+            </div>
+            <button data-hanhdong="nl-them"
+                    class="ml-auto px-4 py-2 rounded-lg bg-gold-400 text-royal-900 text-sm font-bold hover:bg-gold-300 transition-all shadow-sm">
+                <i class="fa-solid fa-plus mr-1.5"></i>Thêm nguyên liệu
+            </button>`;
+
+        const noi = document.getElementById('khoNoiDung');
+        if (noi) noi.innerHTML = `<div id="khoNguyenLieuNoiDung"></div>`;
     }
 
     /* ══════════════════════════ Tồn kho ══════════════════════════ */
@@ -414,13 +469,27 @@ export class KhoScreen {
               <div class="text-2xl font-bold mt-1 ${mau}">${so}</div>
             </div>`;
 
+        const cb = this.thongKe.canh_bao_han || {};
+        const cbHet = cb.so_het_han || 0;
+        const cbSap = cb.so_sap_het || 0;
+        const coCanhBao = cbHet > 0 || cbSap > 0;
+
         o.innerHTML =
-            // 'Âm' đứng riêng chứ không gộp vào 'hết'. Hai cái trông giống
-            // nhau nhưng nghĩa khác hẳn: hết thì đặt thêm là xong, âm là sổ
-            // sách sai và đặt thêm không sửa được.
             the('Tồn âm — sổ sai', d.am || 0, 'text-red-400', 'fa-triangle-exclamation') +
             the('Đã hết', d.het || 0, 'text-orange-400', 'fa-circle-xmark') +
             the('Sắp hết', d.sap_het || 0, 'text-yellow-400', 'fa-circle-exclamation') +
+            `<div data-hanhdong="mo-tab-hansudung"
+                  class="cursor-pointer bg-black/20 border border-gold-400/10 rounded-xl p-4 hover:border-gold-400/30 transition-all"
+                  title="Nhấn để xem chi tiết lô hàng cận/hết hạn">
+               <div class="flex items-center justify-between">
+                 <span class="text-xs text-gray-400 uppercase tracking-wider">Cảnh báo hạn</span>
+                 <i class="fa-solid fa-calendar-xmark ${coCanhBao ? 'text-red-400 animate-pulse' : 'text-gray-500'}"></i>
+               </div>
+               <div class="text-2xl font-bold mt-1 ${cbHet > 0 ? 'text-red-400' : (cbSap > 0 ? 'text-yellow-400' : 'text-gray-400')}">
+                 ${cbHet > 0 ? `${cbHet} hết hạn` : (cbSap > 0 ? `${cbSap} cận hạn` : '0')}
+               </div>
+               <div class="text-[10px] text-gray-500 mt-1">Trong vòng 7 ngày</div>
+             </div>` +
             `<div class="bg-black/20 border border-gold-400/10 rounded-xl p-4">
                <div class="flex items-center justify-between">
                  <span class="text-xs text-gray-400 uppercase tracking-wider">Giá trị tồn</span>
@@ -637,6 +706,18 @@ export class KhoScreen {
                             ${Formatter.tien(Math.round((c.SOLUONG || 0) * (c.DONGIA || 0)))}</td>` : ''}
             </tr>`).join('');
 
+        const urlAnh = p.URL_ANH || (p.HINHANH && p.HINHANH.startsWith('http') ? p.HINHANH : null);
+        const anhHtml = urlAnh ? `
+            <div class="mt-3 p-3 rounded-lg bg-black/30 border border-gold-400/20">
+              <div class="text-xs font-bold text-gold-400 mb-1.5"><i class="fa-solid fa-camera mr-1.5"></i>Ảnh bằng chứng hủy hàng:</div>
+              <a href="${Formatter.an(urlAnh)}" target="_blank" rel="noopener" class="inline-block group relative">
+                <img src="${Formatter.an(urlAnh)}" alt="Bằng chứng" class="max-h-48 rounded border border-white/10 hover:opacity-90 transition-opacity">
+                <span class="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/70 text-[10px] text-white rounded">
+                  <i class="fa-solid fa-up-right-from-square mr-1"></i>Xem ảnh lớn
+                </span>
+              </a>
+            </div>` : '';
+
         await Dialog.bieuMau(
             Formatter.an(p.SO_PHIEU),
             `<div class="text-left text-sm">
@@ -649,7 +730,8 @@ export class KhoScreen {
                  <tbody>${dong}</tbody>
                </table>
                ${p.GHICHU ? `<div class="mt-3 text-xs text-gray-400">
-                              <b>Ghi chú:</b> ${Formatter.an(p.GHICHU)}</div>` : ''}
+                               <b>Ghi chú:</b> ${Formatter.an(p.GHICHU)}</div>` : ''}
+               ${anhHtml}
              </div>`,
             () => true
         );
@@ -738,18 +820,38 @@ export class KhoScreen {
                    ['vosinh', 'Không đảm bảo vệ sinh'], ['roivo', 'Rơi vỡ'], ['khac', 'Khác']]
         }[loai];
 
+        this._anhHuyBase64 = null;
         const dauPhieu = loai === 'nhap'
             ? `<div class="pk-hang2">
                  <input id="fNCC" placeholder="Nhà cung cấp" class="pk-o">
                  <input id="fHD" placeholder="Số hóa đơn NCC" class="pk-o">
                </div>`
+            : loai === 'huy'
+            ? `<div class="pk-hang2">
+                 <select id="fLyDo" class="pk-o">
+                   ${lyDo.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}
+                 </select>
+                 <input id="fGhiChuNgan" placeholder="Phát hiện khi nào (vd: giao ca sáng)" class="pk-o">
+               </div>
+               <div class="mb-3 p-3 rounded-lg border border-red-500/30 bg-red-500/10">
+                 <div class="flex items-center justify-between mb-1.5">
+                   <label class="text-xs font-bold text-red-300 uppercase">
+                     <i class="fa-solid fa-camera mr-1"></i>Ảnh bằng chứng hủy hàng (Bắt buộc)
+                   </label>
+                   <span class="text-[11px] text-gray-400">Chụp hoặc chọn ảnh thực tế</span>
+                 </div>
+                 <input type="file" id="fHinhAnhHuy" accept="image/*"
+                        class="pk-o text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-red-500/20 file:text-red-300 hover:file:bg-red-500/30">
+                 <div id="pkAnhPreview" class="mt-2 hidden flex items-center gap-3">
+                   <img id="pkAnhPreviewImg" src="" alt="Bằng chứng" class="w-16 h-16 object-cover rounded-lg border border-gold-400/30">
+                   <span class="text-xs text-gray-300" id="pkAnhPreviewTen"></span>
+                 </div>
+               </div>`
             : `<div class="pk-hang2">
                  <select id="fLyDo" class="pk-o">
                    ${lyDo.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}
                  </select>
-                 ${loai === 'xuat'
-                    ? '<input id="fNguoiNhan" placeholder="Người nhận hàng" class="pk-o">'
-                    : '<input id="fGhiChuNgan" placeholder="Phát hiện khi nào" class="pk-o">'}
+                 <input id="fNguoiNhan" placeholder="Người nhận hàng" class="pk-o">
                </div>`;
 
         const kqForm = await Swal.fire(this._nenHopThoai({
@@ -787,11 +889,41 @@ export class KhoScreen {
                 <div id="pkTong" style="margin-top:.6rem;text-align:right;font-weight:700;
                      color:#D4AF37"></div>
               </div>`,
-            didOpen: () => this._ganFormPhieu(dsNL, coGia, coHSD),
+            didOpen: () => {
+                this._ganFormPhieu(dsNL, coGia, coHSD);
+                if (loai === 'huy') {
+                    const inputAnh = document.getElementById('fHinhAnhHuy');
+                    const vungPrev = document.getElementById('pkAnhPreview');
+                    const imgPrev  = document.getElementById('pkAnhPreviewImg');
+                    const tenPrev  = document.getElementById('pkAnhPreviewTen');
+                    if (inputAnh) {
+                        inputAnh.addEventListener('change', (e) => {
+                            const file = e.target.files && e.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => {
+                                    this._anhHuyBase64 = ev.target.result;
+                                    if (imgPrev) imgPrev.src = ev.target.result;
+                                    if (tenPrev) tenPrev.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+                                    if (vungPrev) vungPrev.classList.remove('hidden');
+                                };
+                                reader.readAsDataURL(file);
+                            } else {
+                                this._anhHuyBase64 = null;
+                                if (vungPrev) vungPrev.classList.add('hidden');
+                            }
+                        });
+                    }
+                }
+            },
             preConfirm: () => {
                 const dong = this._docDongPhieu(coGia, coHSD);
                 if (!dong.length) {
                     Swal.showValidationMessage('Phiếu phải có ít nhất một dòng hợp lệ.');
+                    return false;
+                }
+                if (loai === 'huy' && !this._anhHuyBase64) {
+                    Swal.showValidationMessage('Phiếu hủy phải có ảnh bằng chứng. Hãy chụp hoặc chọn một ảnh.');
                     return false;
                 }
                 return {
@@ -800,6 +932,7 @@ export class KhoScreen {
                     so_hd_ncc:  document.getElementById('fHD')?.value || '',
                     lydo:       document.getElementById('fLyDo')?.value || '',
                     nguoi_nhan: document.getElementById('fNguoiNhan')?.value || '',
+                    hinhanh_base64: loai === 'huy' ? this._anhHuyBase64 : undefined,
                     ghichu:     [document.getElementById('fGhiChuNgan')?.value,
                                  document.getElementById('fGhiChu')?.value]
                                 .filter(Boolean).join(' — ')
@@ -809,18 +942,19 @@ export class KhoScreen {
 
         if (!kqForm.isConfirmed) return;
 
-        const kqLuu = await ApiClient.ghi('kho_phieu.php', {
+        const goiTin = {
             action: 'tao', loai,
-            // Dòng hàng là mảng lồng nhau mà ApiClient gửi form-urlencoded,
-            // nên đóng thành chuỗi JSON trong một trường. `doc_dong_hang()`
-            // bên máy chủ nhận được cả hai kiểu.
             dong:       JSON.stringify(kqForm.value.dong),
             nhacungcap: kqForm.value.nhacungcap,
             so_hd_ncc:  kqForm.value.so_hd_ncc,
             lydo:       kqForm.value.lydo,
             nguoi_nhan: kqForm.value.nguoi_nhan,
             ghichu:     kqForm.value.ghichu
-        });
+        };
+        if (loai === 'huy' && kqForm.value.hinhanh_base64) {
+            goiTin.hinhanh_base64 = kqForm.value.hinhanh_base64;
+        }
+        const kqLuu = await ApiClient.ghi('kho_phieu.php', goiTin);
 
         await Dialog.thanhCong('Đã lưu', kqLuu.message);
         await this.nap();
