@@ -219,19 +219,6 @@ export class KhoScreen {
         } catch (e) { /* bỏ qua */ }
     }
 
-    /** Bán một đơn mô phỏng để xem hiệu ứng, không cần cầm điện thoại. */
-    async moPhongDon() {
-        const nut = document.querySelector('#tab-kho-content [data-hanhdong="mo-phong"]');
-        if (nut) nut.disabled = true;
-        try {
-            await ApiClient.ghi('kho_nguyenlieu.php', { action: 'mo_phong_don', so_mon: 3 });
-            // Hỏi ngay, không đợi nhịp kế tiếp: bấm nút mà 2 giây sau mới có
-            // gì xảy ra thì trông như nút hỏng.
-            await this._hoiBienDong();
-        } finally {
-            if (nut) setTimeout(() => { nut.disabled = false; }, 600);
-        }
-    }
 
     async nap() {
         if (this.tabCon === 'ton') {
@@ -364,7 +351,6 @@ export class KhoScreen {
             case 'lich-su':    return this.xemLichSu(parseInt(d.manl, 10));
             case 'kiem-ke':    return this.moKiemKe();
             case 'doi-chieu':  return this.doiChieu();
-            case 'mo-phong':   return this.moPhongDon();
             case 'dubao-ngay': return this.duBao.nap(d.ngay);
             case 'dubao-chot': return this.duBao.chot();
             case 'nl-them':    return this.manHinhNL.moFormThem();
