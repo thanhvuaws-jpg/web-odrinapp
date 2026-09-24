@@ -31,6 +31,13 @@ import { SocketBus }  from '../core/SocketBus.js';
  *
  * Nên chỉ cần khai báo đúng sự kiện ở `suKienSauKhiGhi()` là xong — không
  * phải sửa hay build lại ứng dụng Android.
+ *
+ * ẢNH BÀN (QĐ-095, 25/09/2026)
+ * ----------------------------
+ * Thẻ bàn hiện ảnh thật (khách cũng thấy ảnh này khi chọn bàn để đặt).
+ * Form thêm/sửa cho chọn một ảnh mẫu có sẵn trên máy chủ (ban_anh_mau.php)
+ * hoặc tải ảnh từ máy tính lên. Máy chủ chỉ nhận ảnh mẫu đúng danh sách của
+ * nó, nên không gõ tay được đường dẫn lạ.
  */
 export class TableScreen extends CrudScreen {
 
@@ -47,6 +54,28 @@ export class TableScreen extends CrudScreen {
     suKienCanNghe() { return ['refresh_orders']; }
 
     cotBang() { return []; }   // màn hình này vẽ dạng lưới thẻ, không phải bảng
+
+    /** Ảnh mẫu của bàn, nạp một lần cùng danh sách để form mở ra là có ngay. */
+    _anhMau = [];
+
+    async nap() {
+        if (!this._anhMau.length) {
+            try {
+                const kq = await ApiClient.goi('ban_anh_mau.php');
+                this._anhMau = (kq && kq.ANH) || [];
+            } catch (e) {
+                // Không có ảnh mẫu vẫn thêm/sửa bàn được (tải ảnh lên, hoặc không ảnh).
+                this._anhMau = [];
+            }
+        }
+        await super.nap();
+    }
+
+    /** URL hiển thị của ảnh: ảnh nội bộ phải ghép tiền tố /api/, ảnh ngoài dùng thẳng. */
+    static _urlAnh(loai, duongDan) {
+        if (!duongDan) return null;
+        return loai === 'anh_noi_bo' ? ApiClient.TIEN_TO + duongDan : duongDan;
+    }
 
     htmlRong() {
         return `<div class="col-span-full py-10 text-center text-slate-400">
@@ -65,6 +94,8 @@ export class TableScreen extends CrudScreen {
             // Mặc định 'true' để bàn cũ (chưa có cột này) vẫn coi là đang hoạt động
             const hoatDong  = String(b.HOATDONG ?? 'true') === 'true';
             const soDon     = Number(b.SO_DON) || 0;
+            const soPhieu   = Number(b.SO_PHIEU) || 0;
+            const anh       = TableScreen._urlAnh(b.LOAI_ANH, b.URL_ANH_NHO || b.URL_ANH);
 
             // Ba trạng thái hiển thị, xét theo thứ tự ưu tiên:
             // bảo trì > đang có khách > trống
@@ -86,11 +117,13 @@ export class TableScreen extends CrudScreen {
                 mauChu  = 'text-white light:text-royal-900';
             }
 
-            // Bàn đã có lịch sử đơn thì không xóa được (khóa ngoại NO ACTION),
-            // nên không hiện nút xóa — thay bằng chú thích để người dùng hiểu
-            // vì sao, thay vì bấm rồi nhận lỗi.
-            const nutXoa = soDon > 0
-                ? `<span class="p-1.5 text-slate-600" title="Đã có ${soDon} đơn trong lịch sử nên không thể xóa">
+            // Bàn đã có đơn hay phiếu đặt thì máy chủ không cho xóa (giữ lịch
+            // sử), nên không hiện nút xóa — thay bằng chú thích để người dùng
+            // hiểu vì sao, thay vì bấm rồi nhận lỗi.
+            const lichSu = [soDon > 0 ? `${soDon} đơn` : '', soPhieu > 0 ? `${soPhieu} phiếu đặt` : '']
+                .filter(Boolean).join(', ');
+            const nutXoa = lichSu
+                ? `<span class="p-1.5 text-slate-600" title="Đã có ${lichSu} nên không thể xóa — dùng chế độ bảo trì">
                        <i class="fa-solid fa-lock text-xs"></i>
                    </span>`
                 : `<button class="nut-xoa p-1.5 rounded-lg text-slate-400 hover:text-red-400 transition-colors"
@@ -109,19 +142,22 @@ export class TableScreen extends CrudScreen {
                                 <i class="fa-solid ${hoatDong ? 'fa-screwdriver-wrench' : 'fa-rotate-left'} text-xs"></i>
                             </button>
                             <button class="nut-sua p-1.5 rounded-lg text-slate-400 hover:text-gold-400 transition-colors"
-                                    data-id="${id}" title="Đổi tên bàn">
+                                    data-id="${id}" title="Sửa tên và ảnh bàn">
                                 <i class="fa-solid fa-pen text-xs"></i>
                             </button>
                             ${nutXoa}
                         </div>
                     </div>
                     <div class="text-center py-2">
-                        <i class="fa-solid fa-chair text-3xl ${mauIcon} mb-2"></i>
+                        ${anh
+                            ? `<img src="${Formatter.an(anh)}" alt="" loading="lazy"
+                                    class="w-full h-24 object-cover rounded-xl mb-2 ${hoatDong ? '' : 'opacity-50 grayscale'}">`
+                            : `<i class="fa-solid fa-chair text-3xl ${mauIcon} mb-2"></i>`}
                         <div class="font-serif font-bold ${mauChu} text-base truncate">
                             ${Formatter.an(b.TENBAN)}
                         </div>
                         <div class="text-xs text-slate-500 mt-0.5">
-                            Mã bàn #${id}${soDon > 0 ? ` · ${soDon} đơn` : ''}
+                            Mã bàn #${id}${lichSu ? ` · ${lichSu}` : ''}
                         </div>
                     </div>
                 </div>`;
@@ -170,6 +206,19 @@ export class TableScreen extends CrudScreen {
     }
 
     truongForm(banGhi) {
+        // Ô đầu: giữ nguyên (sửa) hoặc không ảnh (thêm). Sửa bàn đang có ảnh
+        // thì thêm ô "Bỏ ảnh". Còn lại là các ảnh mẫu.
+        const dauTien = banGhi
+            ? { giaTri: '', nhan: 'Giữ ảnh hiện tại',
+                anh: TableScreen._urlAnh(banGhi.LOAI_ANH, banGhi.URL_ANH_NHO || banGhi.URL_ANH) }
+            : { giaTri: '', nhan: 'Không ảnh' };
+        const tuyChon = [dauTien];
+        if (banGhi && banGhi.URL_ANH) tuyChon.push({ giaTri: '__bo__', nhan: 'Bỏ ảnh' });
+        for (const a of this._anhMau) {
+            tuyChon.push({ giaTri: a.DUONG_DAN, nhan: a.TEN,
+                           anh: TableScreen._urlAnh(a.LOAI_ANH, a.URL_ANH_NHO || a.URL_ANH) });
+        }
+
         return [
             {
                 ten: 'tenban',
@@ -177,9 +226,50 @@ export class TableScreen extends CrudScreen {
                 kieu: 'text',
                 batBuoc: true,
                 giaTri: banGhi ? banGhi.TENBAN : '',
-                kiemTra: (v) => v.length > 255 ? 'Tên bàn quá dài (tối đa 255 ký tự)' : null
+                kiemTra: (v) => v.length > 50 ? 'Tên bàn tối đa 50 ký tự' : null
+            },
+            {
+                ten: 'anh_mau',
+                nhan: 'Ảnh bàn — chọn ảnh mẫu',
+                kieu: 'chonAnh',
+                giaTri: '',
+                tuyChon
+            },
+            {
+                ten: 'anh_tai_len',
+                nhan: 'Hoặc tải ảnh từ máy (ưu tiên hơn ảnh mẫu)',
+                kieu: 'file'
             }
         ];
+    }
+
+    /**
+     * Đổi hai trường ảnh của form thành đúng MỘT trường máy chủ hiểu:
+     * hinhanh_base64 (tải lên) > hinhanh (ảnh mẫu) > xoa_anh > không gửi gì
+     * (giữ nguyên ảnh cũ).
+     */
+    async chuanBiDuLieuGui(duLieuForm) {
+        const { anh_mau, anh_tai_len, ...goiTin } = duLieuForm;
+        if (anh_tai_len instanceof File) {
+            if (anh_tai_len.size > 5 * 1024 * 1024) {
+                throw new Error('Ảnh quá lớn (tối đa 5 MB).');
+            }
+            goiTin.hinhanh_base64 = await TableScreen._docTepThanhBase64(anh_tai_len);
+        } else if (anh_mau === '__bo__') {
+            goiTin.xoa_anh = '1';
+        } else if (anh_mau) {
+            goiTin.hinhanh = anh_mau;
+        }
+        return goiTin;
+    }
+
+    static _docTepThanhBase64(tep) {
+        return new Promise((ok, loi) => {
+            const doc = new FileReader();
+            doc.onload  = () => ok(doc.result);
+            doc.onerror = () => loi(new Error('Không đọc được tệp ảnh'));
+            doc.readAsDataURL(tep);
+        });
     }
 
     /**
@@ -204,24 +294,22 @@ export class TableScreen extends CrudScreen {
         }
 
         const soDon = Number(banGhi.SO_DON) || 0;
-        if (soDon > 0) {
-            return `Bàn này đã có ${soDon} đơn hàng trong lịch sử nên không thể xóa. `
-                 + `Cơ sở dữ liệu giữ lại để bảo toàn số liệu doanh thu. `
+        const soPhieu = Number(banGhi.SO_PHIEU) || 0;
+        if (soDon > 0 || soPhieu > 0) {
+            const lichSu = [soDon > 0 ? `${soDon} đơn hàng` : '', soPhieu > 0 ? `${soPhieu} phiếu đặt bàn` : '']
+                .filter(Boolean).join(' và ');
+            return `Bàn này đã có ${lichSu} nên không thể xóa — hệ thống giữ lại để bảo toàn lịch sử. `
                  + `Nếu bàn không còn dùng, hãy chuyển sang chế độ BẢO TRÌ (biểu tượng cờ-lê) — bàn sẽ bị loại khỏi danh sách đặt bàn nhưng vẫn giữ nguyên lịch sử.`;
         }
         return null;
     }
 
     /**
-     * Cảnh báo riêng khi bàn có phiếu đặt: những phiếu đó sẽ bị xóa theo
-     * do quy tắc CASCADE, và người dùng cần biết trước điều đó.
+     * Chỉ còn bàn chưa từng dùng mới tới được hộp thoại này (kiemTraTruocKhiXoa
+     * chặn bàn có đơn hay phiếu đặt, và máy chủ cũng chặn — QĐ-095). Trước đây
+     * bàn có phiếu đặt vẫn xóa được, và CASCADE xóa luôn phiếu của khách.
      */
     canhBaoXoa(banGhi) {
-        const soPhieu = banGhi ? (Number(banGhi.SO_PHIEU) || 0) : 0;
-        if (soPhieu > 0) {
-            return `CẢNH BÁO: bàn này có ${soPhieu} phiếu đặt bàn. `
-                 + `Xóa bàn sẽ xóa theo TOÀN BỘ số phiếu đó và không khôi phục được.`;
-        }
-        return 'Bàn này sẽ bị xóa khỏi sơ đồ.';
+        return 'Bàn chưa từng có đơn hay phiếu đặt nào, sẽ bị xóa khỏi sơ đồ.';
     }
 }

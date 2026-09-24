@@ -292,6 +292,22 @@ export class CrudScreen {
         if (t.kieu === 'textarea') {
             return `${nhan}<textarea id="${id}" class="swal2-textarea !w-full !mx-0 !mt-0">${Formatter.an(t.giaTri ?? '')}</textarea>`;
         }
+        // Lưới ảnh bấm để chọn (vd ảnh mẫu của bàn). Mỗi ô là một radio ẩn;
+        // ô không có `anh` thì hiện nhãn chữ (vd "Giữ ảnh cũ", "Không ảnh").
+        if (t.kieu === 'chonAnh') {
+            const o = (t.tuyChon || []).map(o => `
+                <label class="cursor-pointer" title="${Formatter.an(o.nhan)}">
+                    <input type="radio" name="${id}" value="${Formatter.an(o.giaTri)}" class="sr-only peer"
+                           ${String(o.giaTri) === String(t.giaTri ?? '') ? 'checked' : ''}>
+                    <span class="block h-16 rounded-lg overflow-hidden border-2 border-slate-600/40
+                                 peer-checked:border-amber-400 peer-checked:ring-2 peer-checked:ring-amber-400/40">
+                        ${o.anh
+                            ? `<img src="${Formatter.an(o.anh)}" alt="${Formatter.an(o.nhan)}" class="w-full h-full object-cover">`
+                            : `<span class="flex items-center justify-center h-full px-1 text-xs text-slate-400 text-center">${Formatter.an(o.nhan)}</span>`}
+                    </span>
+                </label>`).join('');
+            return `${nhan}<div id="${id}" class="grid grid-cols-4 gap-2 text-left">${o}</div>`;
+        }
         return `${nhan}<input id="${id}" type="${t.kieu || 'text'}"
                        value="${Formatter.an(t.giaTri ?? '')}" class="${lop}">`;
     }
@@ -305,6 +321,9 @@ export class CrudScreen {
 
             if (t.kieu === 'file') {
                 kq[t.ten] = o.files && o.files[0] ? o.files[0] : null;
+            } else if (t.kieu === 'chonAnh') {
+                const chon = o.querySelector('input:checked');
+                kq[t.ten] = chon ? chon.value : '';
             } else {
                 kq[t.ten] = o.value.trim();
             }
