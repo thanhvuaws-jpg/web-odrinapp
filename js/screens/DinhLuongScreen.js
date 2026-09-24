@@ -17,11 +17,11 @@ export class DinhLuongScreen {
     constructor(khoScreen) {
         this.khoScreen = khoScreen;
         this.danhSachMon = [];
-        this.monChuaCo = [];
+        this.soChuaCo = 0;
         this.mamonDangChon = null;
         this.chiTiet = null;
         this.boLoc = { tukhoa: '', chi_chua_co: false };
-        this._daGan = false;
+        this._khungDaGan = null;
     }
 
     async khoiDong(container) {
@@ -33,19 +33,21 @@ export class DinhLuongScreen {
 
     async nap() {
         try {
-            const [kqMon, kqChuaCo] = await Promise.all([
-                ApiClient.layDanhSach('kho_dinhluong.php'),
-                ApiClient.layDanhSach('kho_dinhluong.php', { action: 'mon_chua_cong_thuc' })
-            ]);
-
+            // action=mon: gọi không kèm action thì máy chủ hiểu là đọc công
+            // thức MỘT món và trả 400 "thiếu mã món" — bản đầu gọi như vậy
+            // nên cả màn hình báo lỗi ngay khi mở. Khóa trả về viết HOA
+            // (MAMON, TENMON…), theo kho_mon_va_so_dong().
+            const kqMon = await ApiClient.layDanhSach('kho_dinhluong.php', { action: 'mon' });
             this.danhSachMon = kqMon.danh_sach || [];
-            this.monChuaCo = kqChuaCo.danh_sach || [];
+            this.soChuaCo = kqMon.so_chua_cong_thuc || 0;
 
             // Nếu chưa chọn món nào hoặc món cũ không còn, chọn món đầu tiên
-            if (!this.mamonDangChon && this.danhSachMon.length > 0) {
-                this.mamonDangChon = this.danhSachMon[0].mamon;
+            if (!this._timMon(this.mamonDangChon) && this.danhSachMon.length > 0) {
+                this.mamonDangChon = Number(this.danhSachMon[0].MAMON);
             }
 
+            const nhanChuaCo = document.getElementById('dlSoChuaCo');
+            if (nhanChuaCo) nhanChuaCo.textContent = this.soChuaCo;
             this._veDanhSachMon();
 
             if (this.mamonDangChon) {
@@ -54,6 +56,10 @@ export class DinhLuongScreen {
         } catch (e) {
             Dialog.loiApi(e);
         }
+    }
+
+    _timMon(mamon) {
+        return this.danhSachMon.find(m => Number(m.MAMON) === Number(mamon)) || null;
     }
 
     async napChiTiet(mamon) {
@@ -82,7 +88,7 @@ export class DinhLuongScreen {
                         <div class="flex items-center justify-between text-xs text-gray-400">
                             <label class="flex items-center gap-1.5 cursor-pointer">
                                 <input type="checkbox" id="dlLocChuaCo" class="accent-gold-400">
-                                <span>Chỉ món chưa có công thức (${this.monChuaCo.length})</span>
+                                <span>Chỉ món chưa có công thức (<span id="dlSoChuaCo">${this.soChuaCo}</span>)</span>
                             </label>
                             <span id="dlDemMon" class="font-mono text-[11px]"></span>
                         </div>
@@ -110,10 +116,10 @@ export class DinhLuongScreen {
         let ds = this.danhSachMon;
         if (this.boLoc.tukhoa) {
             const tk = this.boLoc.tukhoa.toLowerCase();
-            ds = ds.filter(m => (m.tenmon || '').toLowerCase().includes(tk));
+            ds = ds.filter(m => (m.TENMON || '').toLowerCase().includes(tk));
         }
         if (this.boLoc.chi_chua_co) {
-            ds = ds.filter(m => (m.so_nguyen_lieu || 0) === 0);
+            ds = ds.filter(m => Number(m.SO_NGUYEN_LIEU || 0) === 0);
         }
 
         if (dem) dem.textContent = `${ds.length} món`;
@@ -124,26 +130,26 @@ export class DinhLuongScreen {
         }
 
         o.innerHTML = ds.map(m => {
-            const chon = Number(m.mamon) === Number(this.mamonDangChon);
-            const chuaCo = (m.so_nguyen_lieu || 0) === 0;
-            const anh = m.hinhanh || 'https://placehold.co/100x100?text=Food';
+            const chon = Number(m.MAMON) === Number(this.mamonDangChon);
+            const chuaCo = Number(m.SO_NGUYEN_LIEU || 0) === 0;
+            const anh = m.HINHANH || 'https://placehold.co/100x100?text=Food';
 
             return `
-                <div data-mamon="${m.mamon}"
+                <div data-mamon="${m.MAMON}"
                      class="dl-the-mon flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all
                             ${chon ? 'bg-gold-400/10 border-gold-400 text-white shadow-sm'
                                    : 'bg-black/20 border-white/5 hover:border-gold-400/30 text-gray-300'}">
                     <img src="${Formatter.an(anh)}" alt="" class="w-10 h-10 rounded-md object-cover border border-white/10 shrink-0">
                     <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-sm truncate">${Formatter.an(m.tenmon)}</div>
+                        <div class="font-semibold text-sm truncate">${Formatter.an(m.TENMON)}</div>
                         <div class="text-[11px] text-gray-400 truncate">
-                            ${Formatter.an(m.tenloai || '')} · <span class="text-gold-300">${Formatter.tien(m.giatien)} ₫</span>
+                            ${Formatter.an(m.TENLOAI || '')} · <span class="text-gold-300">${Formatter.tien(m.GIATIEN)} ₫</span>
                         </div>
                     </div>
                     <div class="shrink-0 text-right">
                         ${chuaCo
                             ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">Chưa có</span>`
-                            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-gold-400/10 text-gold-400 border border-gold-400/20">${m.so_nguyen_lieu} NL</span>`}
+                            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-gold-400/10 text-gold-400 border border-gold-400/20">${m.SO_NGUYEN_LIEU} NL</span>`}
                     </div>
                 </div>`;
         }).join('');
@@ -165,14 +171,19 @@ export class DinhLuongScreen {
         const o = document.getElementById('dlVungChiTiet');
         if (!o || !this.chiTiet) return;
 
+        // Giá vốn và tỷ lệ nằm TRONG `mon` (kho_dinh_luong_cua_mon), không ở
+        // gốc phản hồi. Ảnh và nhóm món không có trong `mon`, lấy từ danh
+        // sách món đã nạp.
         const m = this.chiTiet.mon || {};
+        const tuDs = this._timMon(m.MAMON) || {};
         const ds = this.chiTiet.danh_sach || [];
-        const giaVon = this.chiTiet.gia_von || 0;
-        const tyLe = this.chiTiet.ty_le_gia_von || 0;
+        const giaVon = Number(m.GIA_VON || 0);
+        const tyLe = m.TY_LE_GIA_VON;   // null khi món chưa có giá bán
         const giaBan = parseFloat(m.GIATIEN || 0);
 
         // Màu cho Food Cost: lý tưởng dưới 35%
-        const mauTyLe = tyLe > 45 ? 'text-red-400' : (tyLe > 35 ? 'text-yellow-400' : 'text-emerald-400');
+        const mauTyLe = tyLe == null ? 'text-gray-400'
+                      : tyLe > 45 ? 'text-red-400' : (tyLe > 35 ? 'text-yellow-400' : 'text-emerald-400');
 
         const dongNL = ds.map((r, i) => {
             const urlAnh = r.URL_ANH_NHO || r.URL_ANH;
@@ -201,10 +212,10 @@ export class DinhLuongScreen {
                         ${Formatter.an(r.DONVI)}
                     </td>
                     <td class="py-2.5 text-right text-xs text-gray-400">
-                        ${Formatter.tien(r.GIA_NHAP || 0)} ₫
+                        ${Formatter.tien(r.GIA_NHAP_GANNHAT || 0)} ₫
                     </td>
                     <td class="py-2.5 text-right font-semibold text-sm text-gray-200">
-                        ${Formatter.tien(r.THANH_TIEN || 0)} ₫
+                        ${Formatter.tien(r.GIA_VON_DONG || 0)} ₫
                     </td>
                     <td class="py-2.5 text-right whitespace-nowrap">
                         <button data-hanhdong="sua-dong-dl" data-manl="${r.MANL}" data-tennl="${Formatter.an(r.TENNL)}"
@@ -224,13 +235,13 @@ export class DinhLuongScreen {
             <!-- Tiêu đề & Thông số tổng hợp món -->
             <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-gold-400/20">
                 <div class="flex items-center gap-3">
-                    <img src="${Formatter.an(m.HINHANH || 'https://placehold.co/100x100?text=Food')}"
+                    <img src="${Formatter.an(tuDs.HINHANH || 'https://placehold.co/100x100?text=Food')}"
                          class="w-14 h-14 rounded-lg object-cover border border-gold-400/30">
                     <div>
                         <h3 class="text-base font-bold text-white">${Formatter.an(m.TENMON)}</h3>
                         <div class="text-xs text-gray-400">
                             Giá bán: <span class="text-gold-400 font-bold">${Formatter.tien(giaBan)} ₫</span>
-                            · Danh mục: ${Formatter.an(m.TENLOAI || '')}
+                            · Danh mục: ${Formatter.an(tuDs.TENLOAI || '')}
                         </div>
                     </div>
                 </div>
@@ -241,7 +252,7 @@ export class DinhLuongScreen {
                     </div>
                     <div class="text-right px-3 py-1.5 bg-black/40 rounded-lg border border-white/5">
                         <div class="text-[10px] text-gray-400 uppercase tracking-wider">Food Cost %</div>
-                        <div class="text-sm font-bold ${mauTyLe}">${tyLe}%</div>
+                        <div class="text-sm font-bold ${mauTyLe}">${tyLe == null ? '—' : tyLe + '%'}</div>
                     </div>
                     <button data-hanhdong="them-nl-vao-mon"
                             class="px-3.5 py-2 rounded-lg bg-gold-400 text-royal-900 text-xs font-bold hover:bg-gold-300 transition-all shadow-sm">
@@ -276,10 +287,10 @@ export class DinhLuongScreen {
     }
 
     _ganSuKien() {
-        if (this._daGan) return;
-        this._daGan = true;
-
-        if (!this.container) return;
+        // So theo phần tử, không theo cờ: KhoScreen vẽ lại #khoNoiDung mỗi
+        // lần chuyển tab, nên cờ đã-gắn làm lần mở thứ hai không bấm được gì.
+        if (!this.container || this.container === this._khungDaGan) return;
+        this._khungDaGan = this.container;
 
         this.container.addEventListener('click', (e) => {
             const theMon = e.target.closest('.dl-the-mon');

@@ -18,7 +18,7 @@ export class HanSuDungPanel {
         this.duLieu = null;
         this.nguong = 7;
         this.container = null;
-        this._daGan = false;
+        this._khungDaGan = null;
     }
 
     async khoiDong(container) {
@@ -77,12 +77,15 @@ export class HanSuDungPanel {
 
         const hetHan = this.duLieu.het_han || [];
         const sapHet = this.duLieu.sap_het_han || [];
+        // Tên trường theo kho_canh_bao_han(): so_sap_het_han và GIA_TRI. Bản
+        // đầu đọc so_sap_het và GIATRI_RUI_RO — không trường nào tồn tại, nên
+        // thẻ "sắp hết hạn" và mọi con số tiền đều hiện 0.
         const tongHetHan = this.duLieu.so_het_han || 0;
-        const tongSapHet = this.duLieu.so_sap_het || 0;
+        const tongSapHet = this.duLieu.so_sap_het_han || 0;
 
         // Tính tổng giá trị rủi ro
-        const ruiRoHet = hetHan.reduce((sum, r) => sum + parseFloat(r.GIATRI_RUI_RO || 0), 0);
-        const ruiRoSap = sapHet.reduce((sum, r) => sum + parseFloat(r.GIATRI_RUI_RO || 0), 0);
+        const ruiRoHet = hetHan.reduce((sum, r) => sum + parseFloat(r.GIA_TRI || 0), 0);
+        const ruiRoSap = sapHet.reduce((sum, r) => sum + parseFloat(r.GIA_TRI || 0), 0);
 
         const theThongKe = `
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -141,7 +144,7 @@ export class HanSuDungPanel {
                             ${nhanHan}
                         </td>
                         <td class="py-2.5 text-right font-mono font-bold ${laHetHan ? 'text-red-400' : 'text-gold-300'}">
-                            ${Formatter.tien(r.GIATRI_RUI_RO || 0)} ₫
+                            ${Formatter.tien(r.GIA_TRI || 0)} ₫
                         </td>
                         <td class="py-2.5 text-center">
                             ${daDungHet ? `<span class="text-[10px] text-gray-500 font-mono" title="Tồn kho của nguyên liệu này hiện đã hết">Đã dùng hết</span>`
@@ -206,10 +209,11 @@ export class HanSuDungPanel {
     }
 
     _ganSuKien() {
-        if (this._daGan) return;
-        this._daGan = true;
-
-        if (!this.container) return;
+        // So theo phần tử, không theo cờ: khung #khoNoiDung bị KhoScreen vẽ
+        // lại mỗi lần chuyển tab, nên cờ đã-gắn làm lần mở thứ hai mất hết
+        // sự kiện (đổi ngưỡng, Làm mới không phản hồi).
+        if (!this.container || this.container === this._khungDaGan) return;
+        this._khungDaGan = this.container;
 
         this.container.addEventListener('change', (e) => {
             if (e.target.id === 'hsdNguongNgay') {

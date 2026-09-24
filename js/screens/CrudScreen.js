@@ -46,7 +46,7 @@ export class CrudScreen {
 
     constructor() {
         this.duLieu = [];
-        this._daGanSuKien = false;
+        this._khungDaGan = null;
         this._huyDangKySocket = [];
     }
 
@@ -330,9 +330,13 @@ export class CrudScreen {
      * cho cả những dòng được vẽ sau này.
      */
     _ganSuKien() {
-        if (this._daGanSuKien) return;
+        // So theo PHẦN TỬ chứ không theo cờ đã-gắn: màn hình nằm trong một
+        // tab con (NguyenLieuScreen trong KhoScreen) có khung bảng bị vẽ lại
+        // mỗi lần chuyển tab. Theo cờ thì khung mới không có listener, và
+        // các nút Sửa/Ngừng im lặng không làm gì. Màn hình có khung cố định
+        // thì phần tử không đổi, nên vẫn chỉ gắn đúng một lần như trước.
         const khung = document.querySelector(this.selectorBang);
-        if (!khung) return;
+        if (!khung || khung === this._khungDaGan) return;
 
         khung.addEventListener('click', (e) => {
             const nutSua = e.target.closest('.nut-sua');
@@ -346,7 +350,7 @@ export class CrudScreen {
             this.ganSuKienRieng(e, khung);
         });
 
-        this._daGanSuKien = true;
+        this._khungDaGan = khung;
     }
 
     /**

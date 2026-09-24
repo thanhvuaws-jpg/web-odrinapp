@@ -18,6 +18,7 @@ export class NguyenLieuScreen extends CrudScreen {
         super();
         this.xemDaNgung = false;
         this.danhSachNhom = [];
+        this.donVi = [];
     }
 
     get tenHienThi()       { return 'nguyên liệu'; }
@@ -36,14 +37,25 @@ export class NguyenLieuScreen extends CrudScreen {
         return (phanHoi && phanHoi.danh_sach) || [];
     }
 
-    /** Nạp danh sách nhóm để đổ vào select box của biểu mẫu */
+    /**
+     * Nạp danh sách nhóm và đơn vị đo để đổ vào biểu mẫu.
+     *
+     * Đơn vị lấy từ máy chủ (action=don_vi), không gõ cứng ở đây: bản đầu
+     * gõ cứng một danh sách có 'g', trong khi máy chủ chỉ nhận 'gam' — chọn
+     * 'g' là bị từ chối. Máy chủ là nơi kiểm, nên máy chủ là nơi khai.
+     */
     async napNhom() {
-        if (this.danhSachNhom.length) return;
+        if (this.danhSachNhom.length && this.donVi.length) return;
         try {
-            const kq = await ApiClient.layDanhSach('kho_nguyenlieu.php', { action: 'nhom' });
-            this.danhSachNhom = kq.danh_sach || [];
+            const [kqNhom, kqDonVi] = await Promise.all([
+                ApiClient.layDanhSach('kho_nguyenlieu.php', { action: 'nhom' }),
+                ApiClient.layDanhSach('kho_nguyenlieu.php', { action: 'don_vi' })
+            ]);
+            this.danhSachNhom = kqNhom.danh_sach || [];
+            this.donVi = [...(kqDonVi.do_luong || []), ...(kqDonVi.dem_duoc || [])];
         } catch (e) {
             this.danhSachNhom = [];
+            this.donVi = [];
         }
     }
 
@@ -71,7 +83,11 @@ export class NguyenLieuScreen extends CrudScreen {
                         ${Formatter.an(this.chuDau(n.TENNL))}
                    </div>`;
 
-            const tt = String(n.HOATDONG) === 'true';
+            // Trạng thái theo CHẾ ĐỘ đang xem: máy chủ đã lọc sẵn hai danh
+            // sách, và không trả cột HOATDONG. Bản đầu đọc n.HOATDONG nên mọi
+            // nguyên liệu đang dùng đều hiện "Đã ngừng" kèm nút "Dùng lại" —
+            // không sửa hay ngừng được mặt hàng nào từ web.
+            const tt = !this.xemDaNgung;
             const nutHanhDong = tt
                 ? `<button class="nut-sua p-2 rounded-lg border border-gold-400/20 text-gold-400 hover:bg-gold-400/10 transition-all text-xs"
                            data-id="${id}" title="Sửa thông tin"><i class="fa-solid fa-pen"></i></button>
@@ -154,7 +170,8 @@ export class NguyenLieuScreen extends CrudScreen {
         }));
         nhomOptions.unshift({ giaTri: '', nhan: '— Không phân nhóm —' });
 
-        const donViList = ['kg', 'g', 'lít', 'ml', 'quả', 'cái', 'hộp', 'bó', 'lon', 'chai', 'gói'];
+        const donViList = this.donVi.length ? [...this.donVi] : ['kg'];
+        if (bg?.DONVI && !donViList.includes(bg.DONVI)) donViList.push(bg.DONVI);
         const donViOptions = donViList.map(dv => ({ giaTri: dv, nhan: dv }));
 
         return [

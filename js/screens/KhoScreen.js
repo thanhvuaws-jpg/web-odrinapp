@@ -214,7 +214,8 @@ export class KhoScreen {
         if (this.tabCon !== 'ton') return;
         try {
             const kq = await ApiClient.layDanhSach('kho_nguyenlieu.php');
-            this.thongKe = { dem: kq.dem, gia_tri_ton: kq.gia_tri_ton, so: kq.so_nguyen_lieu };
+            this.thongKe = { dem: kq.dem, gia_tri_ton: kq.gia_tri_ton, so: kq.so_nguyen_lieu,
+                             canh_bao_han: kq.canh_bao_han };
             this._veTheTomTat();
         } catch (e) { /* bỏ qua */ }
     }
@@ -233,7 +234,8 @@ export class KhoScreen {
             ]);
             if (nhom) this.nhom = nhom.danh_sach || [];
             this.nguyenLieu = kq.danh_sach || [];
-            this.thongKe    = { dem: kq.dem, gia_tri_ton: kq.gia_tri_ton, so: kq.so_nguyen_lieu };
+            this.thongKe    = { dem: kq.dem, gia_tri_ton: kq.gia_tri_ton, so: kq.so_nguyen_lieu,
+                             canh_bao_han: kq.canh_bao_han };
             this._veTonKho();
         } else if (this.tabCon === 'dubao') {
             await this.duBao.nap();
@@ -355,9 +357,11 @@ export class KhoScreen {
             case 'dubao-chot': return this.duBao.chot();
             case 'nl-them':    return this.manHinhNL.moFormThem();
             case 'nl-che-do': {
-                const xemNgung = d.ngung === '1';
-                await this.manHinhNL.chuyenCheDo(xemNgung);
+                // Vẽ khung TRƯỚC rồi mới nạp. Bản đầu nạp trước rồi vẽ khung,
+                // nên khung mới đè mất bảng vừa vẽ và người dùng thấy trống.
+                this.manHinhNL.xemDaNgung = d.ngung === '1';
                 this._veKhungNguyenLieu();
+                await this.manHinhNL.khoiDong();
                 return;
             }
             case 'mo-tab-hansudung': {
@@ -414,11 +418,6 @@ export class KhoScreen {
                      class="accent-gold-400"> Chỉ thứ cần chú ý
             </label>
             <div class="ml-auto flex gap-2">
-              <button data-hanhdong="mo-phong"
-                class="px-4 py-2 rounded-lg border border-gold-400/30 text-gold-400 text-sm
-                       font-bold hover:bg-gold-400/10 transition-all disabled:opacity-50"
-                title="Bán thử một đơn để xem kho bị trừ">
-                <i class="fa-solid fa-play mr-1.5"></i>Mô phỏng 1 đơn</button>
               <button data-hanhdong="kiem-ke"
                 class="px-4 py-2 rounded-lg bg-gold-400 text-royal-900 text-sm font-bold
                        hover:bg-gold-300 transition-all">
@@ -455,12 +454,18 @@ export class KhoScreen {
               <div class="text-2xl font-bold mt-1 ${mau}">${so}</div>
             </div>`;
 
+        // Tên khóa theo kho_dem_canh_bao_han(): het_han / sap_het_han. Bản
+        // đầu đọc so_het_han / so_sap_het (tên của hàm chi tiết, và sai cả
+        // tên đó), nên thẻ luôn hiện 0 kể cả khi có lô đã hết hạn.
         const cb = this.thongKe.canh_bao_han || {};
-        const cbHet = cb.so_het_han || 0;
-        const cbSap = cb.so_sap_het || 0;
+        const cbHet = cb.het_han || 0;
+        const cbSap = cb.sap_het_han || 0;
         const coCanhBao = cbHet > 0 || cbSap > 0;
 
         o.innerHTML =
+            // 'Âm' đứng riêng chứ không gộp vào 'hết'. Hai cái trông giống
+            // nhau nhưng nghĩa khác hẳn: hết thì đặt thêm là xong, âm là sổ
+            // sách sai và đặt thêm không sửa được.
             the('Tồn âm — sổ sai', d.am || 0, 'text-red-400', 'fa-triangle-exclamation') +
             the('Đã hết', d.het || 0, 'text-orange-400', 'fa-circle-xmark') +
             the('Sắp hết', d.sap_het || 0, 'text-yellow-400', 'fa-circle-exclamation') +
@@ -930,6 +935,9 @@ export class KhoScreen {
 
         const goiTin = {
             action: 'tao', loai,
+            // Dòng hàng là mảng lồng nhau mà ApiClient gửi form-urlencoded,
+            // nên đóng thành chuỗi JSON trong một trường. `doc_dong_hang()`
+            // bên máy chủ nhận được cả hai kiểu.
             dong:       JSON.stringify(kqForm.value.dong),
             nhacungcap: kqForm.value.nhacungcap,
             so_hd_ncc:  kqForm.value.so_hd_ncc,
