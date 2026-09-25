@@ -379,7 +379,9 @@ export class ChatScreen {
                     Trợ lý tự động đã tắt cho hội thoại này — khách chỉ nhận được
                     câu trả lời của người thật.
                 </div>` : ''}
-                <div class="flex items-end gap-2">
+                <!-- pr-16: chừa chỗ cho nút nhạc nổi (cố định góc phải dưới,
+                     music-player.js) — không chừa thì nó đè lên nút gửi (H30). -->
+                <div class="flex items-end gap-2 pr-16">
                     <textarea id="chatONhap" rows="1" maxlength="2000"
                               placeholder="Nhập câu trả lời… (Enter để gửi, Shift+Enter xuống dòng)"
                               class="flex-1 resize-none rounded-xl bg-black/30 border border-gold-400/20
@@ -396,6 +398,9 @@ export class ChatScreen {
         this._ganSuKienKhung();
     }
 
+    // Nội dung tin phải đặt SÁT thẻ: khối dùng whitespace-pre-wrap nên mọi xuống
+    // dòng và khoảng trắng thụt lề của chính mẫu HTML này đều hiện ra thành
+    // chữ thụt đầu dòng trong bong bóng (H30).
     _veTin(t) {
         const gio = Formatter.gioPhut(t.NGAYTAO);
 
@@ -404,9 +409,7 @@ export class ChatScreen {
             <div class="flex justify-start">
                 <div class="max-w-[75%]">
                     <div class="rounded-2xl rounded-bl-sm bg-white/8 border border-white/10
-                                px-4 py-2.5 text-sm text-gray-100 whitespace-pre-wrap break-words">
-                        ${Formatter.an(t.NOIDUNG)}
-                    </div>
+                                px-4 py-2.5 text-sm text-gray-100 whitespace-pre-wrap break-words">${Formatter.an(t.NOIDUNG)}</div>
                     <div class="text-[10px] text-gray-500 mt-1 ml-1">${gio}</div>
                 </div>
             </div>`;
@@ -432,9 +435,7 @@ export class ChatScreen {
                     ${laBot ? '<i class="fa-solid fa-robot mr-1"></i>' : ''}${Formatter.an(ten)}
                 </div>
                 <div class="rounded-2xl rounded-br-sm border ${nen}
-                            px-4 py-2.5 text-sm whitespace-pre-wrap break-words">
-                    ${Formatter.an(t.NOIDUNG)}
-                </div>
+                            px-4 py-2.5 text-sm whitespace-pre-wrap break-words">${Formatter.an(t.NOIDUNG)}</div>
                 <div class="text-[10px] text-gray-500 mt-1 mr-1 text-right">${gio}</div>
             </div>
         </div>`;
