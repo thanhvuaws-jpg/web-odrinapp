@@ -115,8 +115,8 @@ export class DinhLuongScreen {
 
         let ds = this.danhSachMon;
         if (this.boLoc.tukhoa) {
-            const tk = this.boLoc.tukhoa.toLowerCase();
-            ds = ds.filter(m => (m.TENMON || '').toLowerCase().includes(tk));
+            const tk = Formatter.boDau(this.boLoc.tukhoa);
+            ds = ds.filter(m => Formatter.boDau(m.TENMON).includes(tk));
         }
         if (this.boLoc.chi_chua_co) {
             ds = ds.filter(m => Number(m.SO_NGUYEN_LIEU || 0) === 0);

@@ -65,4 +65,17 @@ export class Formatter {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     }
+
+    /**
+     * Chữ thường, bỏ dấu tiếng Việt: "Phở Bò" -> "pho bo". Để ô tìm kiếm
+     * lọc trên trình duyệt gõ "pho" vẫn ra "Phở Bò", giống tìm trên máy chủ.
+     */
+    static boDau(chuoi) {
+        return String(chuoi ?? '')
+            .normalize('NFD')
+            .replace(/\p{M}/gu, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .toLowerCase()
+            .trim();
+    }
 }

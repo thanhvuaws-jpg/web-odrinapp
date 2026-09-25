@@ -546,6 +546,11 @@
     <script>
         // --- DATA & STATE ---
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        // Chữ người dùng gõ (tên món, ghi chú món) phải thoát HTML trước khi
+        // chèn: ghi chú "<b>ít cay</b>" phải hiện đúng chữ, không thành thẻ.
+        const thoatHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[c]);
 
         // State variables
         let pendingOrders = [];
@@ -1013,7 +1018,7 @@
                                     <td class="py-3 px-2 text-sm text-white">
                                         <div class="flex items-center gap-3">
                                             <div class="w-6 h-6 rounded bg-slate-800 flex items-center justify-center text-xs text-slate-400 group-hover:bg-royal-gold/20 group-hover:text-royal-gold transition-colors">${index + 1}</div>
-                                            <span class="font-medium">${item.TENMON}</span>
+                                            <span class="font-medium">${thoatHtml(item.TENMON)}</span>
                                         </div>
                                     </td>
                                     <td class="py-3 px-2 text-center text-sm font-bold text-white">${qty}</td>
@@ -1081,8 +1086,11 @@
                         tr.innerHTML = `
                             <td class="py-3">
                                 <div class="flex items-center space-x-3">
-                                    <img class="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" src="${imgUrl}" alt="${item.TENMON}" onerror="this.src='https://placehold.co/100x100?text=Food'">
-                                    <span class="font-medium text-white block text-sm leading-tight">${item.TENMON}</span>
+                                    <img class="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" src="${thoatHtml(imgUrl)}" alt="${thoatHtml(item.TENMON)}" onerror="this.src='https://placehold.co/100x100?text=Food'">
+                                    <div class="min-w-0">
+                                        <span class="font-medium text-white block text-sm leading-tight">${thoatHtml(item.TENMON)}</span>
+                                        ${item.GHICHU ? `<span class="block mt-1 text-xs italic text-amber-300/90 leading-snug"><i class="fa-regular fa-note-sticky mr-1"></i>${String(item.GHICHU).split(' · ').map(thoatHtml).join('<br>')}</span>` : ''}
+                                    </div>
                                 </div>
                             </td>
                             <td class="py-3 text-center text-slate-300 whitespace-nowrap">${item.SOLUONG}</td>
@@ -1395,7 +1403,7 @@
             selectedOrderDetails.forEach(item => {
                 tbody.innerHTML += `
                     <tr>
-                        <td style="text-align:left;">${item.TENMON}</td>
+                        <td style="text-align:left;">${thoatHtml(item.TENMON)}</td>
                         <td style="text-align:center;">${item.SOLUONG}</td>
                         <td style="text-align:right;">${formatCurrency(item.GIATIEN * item.SOLUONG)}</td>
                     </tr>
