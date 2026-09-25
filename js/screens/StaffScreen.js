@@ -174,8 +174,11 @@ export class StaffScreen extends CrudScreen {
     }
 
     canhBaoXoa() {
-        return 'Tài khoản này sẽ bị xóa khỏi hệ thống. '
-             + 'Nếu tài khoản đã từng lập đơn hàng, cơ sở dữ liệu sẽ từ chối để bảo toàn lịch sử.';
+        // Máy chủ chỉ xóa tài khoản chưa có lịch sử (QĐ-096): đơn hàng, phiếu
+        // đặt, mã giảm giá, điểm, hội thoại, phiếu kho. Trước đây xóa khách là
+        // CASCADE mất sạch những thứ đó mà không hỏi.
+        return 'Chỉ xóa được tài khoản chưa có đơn hàng, phiếu đặt bàn, mã giảm giá hay lịch sử nào (tạo nhầm). '
+             + 'Tài khoản đã có lịch sử sẽ được giữ lại và máy chủ báo rõ lý do.';
     }
 
     /** Bỏ trống ô mật khẩu khi sửa thì không gửi lên, máy chủ giữ mật khẩu cũ. */
