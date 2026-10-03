@@ -1355,15 +1355,26 @@
                                 });
                             }
                         },
-                        error: function() {
+                        error: function(xhr) {
                             Swal.close();
+                            // Máy chủ từ chối (409: mã giảm giá hỏng, đơn đã có mã, đơn chưa
+                            // gửi thanh toán...) cũng rơi vào nhánh này. Trước đây mọi trường
+                            // hợp đều hiện "Mất kết nối tới server" — sai và gây hoang mang.
+                            // Chỉ khi không có phản hồi nào (status 0) mới là mất kết nối.
+                            const matKetNoi = xhr.status === 0;
+                            let lyDo = '';
+                            try { lyDo = JSON.parse(xhr.responseText).message || ''; } catch (e) {}
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Lỗi kết nối',
-                                text: 'Mất kết nối tới server. Vui lòng kiểm tra VPS.',
+                                title: matKetNoi ? 'Lỗi kết nối' : 'Chưa xác nhận được',
+                                text: matKetNoi
+                                    ? 'Mất kết nối tới máy chủ. Vui lòng kiểm tra mạng rồi thử lại.'
+                                    : (lyDo || `Máy chủ từ chối yêu cầu (mã ${xhr.status}).`),
                                 background: '#1e293b',
                                 color: '#fff'
                             });
+                            // Đơn có thể vừa được người khác xử lý: nạp lại danh sách.
+                            if (!matKetNoi) fetchOrders();
                         }
                     });
                 }

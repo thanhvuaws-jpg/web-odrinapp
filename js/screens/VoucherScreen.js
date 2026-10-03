@@ -52,7 +52,8 @@ export class VoucherScreen extends CrudScreen {
             {
                 ten: 'HANG_TOITHIEU', nhan: 'Hạng',
                 dinhDang: (v) => {
-                    const m = { dong: ['Đồng', '#CD7F32'], bac: ['Bạc', '#C0C0C0'], vang: ['Vàng', '#FFD700'] };
+                    const m = { dong: ['Đồng', '#CD7F32'], bac: ['Bạc', '#C0C0C0'], vang: ['Vàng', '#FFD700'],
+                                kimcuong: ['Kim cương', '#00BCD4'] };
                     const [nhan, mau] = m[v] || [v, '#9E9E9E'];
                     return `<span class="text-xs font-bold" style="color:${mau}">${Formatter.an(nhan)}</span>`;
                 }
@@ -143,7 +144,8 @@ export class VoucherScreen extends CrudScreen {
                 tuyChon: [
                     { giaTri: 'dong', nhan: 'Đồng — mọi thành viên' },
                     { giaTri: 'bac',  nhan: 'Bạc trở lên' },
-                    { giaTri: 'vang', nhan: 'Vàng' },
+                    { giaTri: 'vang', nhan: 'Vàng trở lên' },
+                    { giaTri: 'kimcuong', nhan: 'Kim cương' },
                 ]
             },
             {
