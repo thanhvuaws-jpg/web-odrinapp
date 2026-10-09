@@ -539,6 +539,9 @@ $(document).ready(function() {
             socket.emit('join_admin'); // Join vào room admin nhận đơn
         });
 
+        // Bảo trì + thông báo từ bảng điều khiển máy chủ (js/config.js).
+        RoyalHeThong.ganSocket(socket);
+
         socket.on('new_order_paid', (orders) => {
             if (!Array.isArray(orders)) return;
             orders.forEach(order => {

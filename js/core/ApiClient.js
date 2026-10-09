@@ -83,6 +83,12 @@ export class ApiClient {
             throw new LoiApi('Không kết nối được máy chủ. Kiểm tra lại mạng.', 0);
         }
 
+        // Đang bảo trì (QĐ-107): tải lại để nhận trang bảo trì của Caddy.
+        if (phanHoi.status === 503 && phanHoi.headers.get('X-Bao-Tri')) {
+            window.location.reload();
+            throw new LoiApi('Hệ thống đang bảo trì.', 503);
+        }
+
         // Phiên hết hiệu lực: xử lý tập trung tại đây thay vì để từng màn
         // hình tự đoán. Không bắt ở đây thì mọi lời gọi sẽ lặng lẽ thất bại
         // và giao diện chỉ hiện dữ liệu trống, người dùng không hiểu vì sao.

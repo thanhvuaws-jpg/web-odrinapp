@@ -65,3 +65,64 @@ $(document).ajaxError(function (event, jqxhr) {
         window.location.href = 'index.html';
     }
 });
+
+// ---------------------------------------------------------------------
+// Bảo trì và thông báo hệ thống từ bảng điều khiển máy chủ (QĐ-107)
+// ---------------------------------------------------------------------
+// Khi bảo trì, Caddy trả 503 kèm header X-Bao-Tri cho mọi lời gọi /api/ và
+// trả trang bảo trì thay cho mọi trang. Chỉ cần tải lại: trình duyệt nhận
+// trang bảo trì, trang đó tự mở lại khi hết bảo trì.
+$(document).ajaxError(function (event, jqxhr) {
+    if (jqxhr.status === 503 && jqxhr.getResponseHeader('X-Bao-Tri')) {
+        window.location.reload();
+    }
+});
+
+window.RoyalHeThong = {
+    /** Gắn hai sự kiện của bảng điều khiển vào socket của trang (admin.js, cashier.html). */
+    ganSocket: function (socket) {
+        socket.on('bao_tri', function (tt) {
+            if (tt && tt.bat) window.location.reload();
+        });
+        socket.on('thong_bao_he_thong', function (tb) {
+            if (tb && tb.noi_dung) RoyalHeThong.hienThongBao(tb.noi_dung, tb.muc_do === 'canh_bao');
+        });
+    },
+
+    /**
+     * Dải thông báo trên đầu trang. Cố ý KHÔNG dùng Swal: Swal chỉ có một hộp
+     * tại một thời điểm, gọi Swal.fire sẽ đóng mất hộp nhân viên đang nhập dở.
+     */
+    hienThongBao: function (noiDung, canhBao) {
+        var cu = document.getElementById('royalThongBaoHeThong');
+        if (cu) cu.remove();
+        var dai = document.createElement('div');
+        dai.id = 'royalThongBaoHeThong';
+        dai.setAttribute('role', 'alert');
+        dai.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;'
+            + 'max-width:min(640px,calc(100vw - 32px));display:flex;gap:12px;align-items:flex-start;'
+            + 'padding:14px 16px;border-radius:14px;background:#141416;color:#ece7da;'
+            + 'box-shadow:0 18px 50px rgba(0,0,0,.55);font:14px/1.5 "Segoe UI",Roboto,sans-serif;'
+            + 'border:1px solid ' + (canhBao ? 'rgba(240,168,75,.7)' : 'rgba(212,175,55,.5)') + ';';
+        var noi = document.createElement('div');
+        var tieuDe = document.createElement('div');
+        tieuDe.style.cssText = 'font-weight:700;margin-bottom:2px;color:' + (canhBao ? '#f0a84b' : '#d4af37');
+        tieuDe.textContent = canhBao ? 'Cảnh báo từ quản trị hệ thống' : 'Thông báo hệ thống';
+        var than = document.createElement('div');
+        than.style.whiteSpace = 'pre-line';
+        than.textContent = noiDung;
+        noi.appendChild(tieuDe);
+        noi.appendChild(than);
+        var dong = document.createElement('button');
+        dong.type = 'button';
+        dong.textContent = 'Đã hiểu';
+        dong.style.cssText = 'margin-left:auto;flex:none;cursor:pointer;border:1px solid rgba(212,175,55,.5);'
+            + 'background:transparent;color:#f3e5ab;border-radius:8px;padding:4px 10px;font:inherit;';
+        dong.onclick = function () { dai.remove(); };
+        dai.appendChild(noi);
+        dai.appendChild(dong);
+        document.body.appendChild(dai);
+        // Thông tin tự ẩn; cảnh báo giữ tới khi bấm "Đã hiểu".
+        if (!canhBao) setTimeout(function () { dai.remove(); }, 20000);
+    }
+};

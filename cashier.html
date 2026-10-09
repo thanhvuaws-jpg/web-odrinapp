@@ -542,7 +542,7 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="js/config.js?v=1.1"></script>
+    <script src="js/config.js?v=1.2"></script>
     <script>
         // --- DATA & STATE ---
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -1446,6 +1446,9 @@
                 console.log('🔌 Cashier WebSocket connected!');
                 socket.emit('join_cashier'); // Đăng ký vào room thu ngân
             });
+
+            // Bảo trì + thông báo từ bảng điều khiển máy chủ (js/config.js).
+            RoyalHeThong.ganSocket(socket);
 
             socket.on('refresh_orders', () => {
                 console.log('📢 Refreshing order list via WebSocket');
