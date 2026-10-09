@@ -1000,6 +1000,16 @@ $(document).ready(function() {
         $("#btnAddDish").click();
     });
 
+    // Ảnh thay khi món chưa có ảnh hoặc ảnh tải lỗi: SVG nội tuyến (đĩa trên nền tối).
+    // Trước đây trỏ landing-page/assets/pho_bo.png — tệp không có trong kho nên ảnh
+    // thay cũng lỗi. Ảnh nội tuyến không cần tệp hay dịch vụ ngoài.
+    const ANH_MON_THAY = 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">' +
+        '<rect width="48" height="48" fill="#0a0a0a"/>' +
+        '<circle cx="24" cy="24" r="13" fill="none" stroke="#D4AF37" stroke-width="2"/>' +
+        '<circle cx="24" cy="24" r="7" fill="none" stroke="#D4AF37" stroke-opacity=".45" stroke-width="1.5"/>' +
+        '</svg>');
+
     function loadLandingDishPreviews() {
         const container = $("#landingDishPreviewList");
         container.html(`
@@ -1029,15 +1039,15 @@ $(document).ready(function() {
                 list.forEach(dish => {
                     const name = dish.TENMON || dish.tenMon || 'Món ăn';
                     const price = Number(dish.GIATIEN || dish.giaTien || 0).toLocaleString('vi-VN') + 'đ';
-                    let img = dish.HINHANH || 'landing-page/assets/pho_bo.png';
-                    if (!img.startsWith('http') && !img.startsWith('assets/') && !img.startsWith('landing-page/')) {
+                    let img = dish.HINHANH || ANH_MON_THAY;
+                    if (dish.HINHANH && !img.startsWith('http') && !img.startsWith('assets/') && !img.startsWith('landing-page/')) {
                         img = CONFIG.BASE_URL + img;
                     }
 
                     html += `
                         <div class="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-gold-400/10 hover:border-gold-400/30 transition-all">
                             <div class="flex items-center space-x-3 min-w-0">
-                                <img src="${img}" alt="${name}" class="w-12 h-12 rounded-lg object-cover border border-white/10" onerror="this.src='landing-page/assets/pho_bo.png'">
+                                <img src="${img}" alt="${name}" class="w-12 h-12 rounded-lg object-cover border border-white/10" onerror="this.onerror=null;this.src='${ANH_MON_THAY}'">
                                 <div class="min-w-0">
                                     <h5 class="text-sm font-bold text-white truncate">${name}</h5>
                                     <p class="text-xs text-gold-400 font-semibold">${price}</p>
