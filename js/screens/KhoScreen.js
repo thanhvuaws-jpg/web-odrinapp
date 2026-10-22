@@ -1051,7 +1051,7 @@ export class KhoScreen {
      * "đã đếm, còn 0". Gộp hai cái thì mở bảng ra bấm lưu ngay sẽ quét sạch
      * toàn bộ tồn kho về 0 — một cú bấm nhầm xóa cả kho.
      */
-    async moKiemKe() {
+    async moKiemKe(daGo = {}, ghiChuCu = '') {
         if (!this.nguyenLieu.length) {
             Dialog.canhBao('Chưa có gì để kiểm kê', 'Bộ lọc hiện tại không ra nguyên liệu nào.');
             return;
@@ -1062,8 +1062,9 @@ export class KhoScreen {
               <td style="padding:.2rem .4rem">${Formatter.an(n.TENNL)}</td>
               <td style="padding:.2rem .4rem;text-align:right;color:#9aa">
                 ${this.soDep(n.TON_HIENTAI)} ${Formatter.an(n.DONVI)}</td>
-              <td style="padding:.2rem"><input type="number" step="0.001" min="0"
+              <td style="padding:.2rem"><input type="text" inputmode="decimal"
                     class="kk-o" data-manl="${n.MANL}" placeholder="—"
+                    value="${Formatter.an(daGo[n.MANL] ?? '')}"
                     style="width:100%;padding:.35rem .5rem;border-radius:.4rem;
                            background:rgba(0,0,0,.25);border:1px solid rgba(212,175,55,.2);
                            color:inherit;font-size:.85rem"></td>
@@ -1073,14 +1074,14 @@ export class KhoScreen {
             title: `Kiểm kê ${this.nguyenLieu.length} nguyên liệu`,
             width: 640,
             showCancelButton: true,
-            confirmButtonText: 'Ghi kết quả',
+            confirmButtonText: 'Xem chênh lệch',
             cancelButtonText: 'Hủy',
             focusConfirm: false,
             html: `
               <div style="text-align:left;font-size:.85rem">
                 <div style="color:#9aa;margin-bottom:.6rem">
-                  Điền số đếm được. <b>Để trống</b> nghĩa là không đếm mặt hàng đó —
-                  tồn giữ nguyên.
+                  Điền số đếm được (gõ 1,5 hoặc 1.5 đều được). <b>Để trống</b> nghĩa là không đếm
+                  mặt hàng đó — tồn giữ nguyên. Bước sau sẽ cho xem chênh lệch trước khi sửa tồn.
                 </div>
                 <div style="max-height:22rem;overflow-y:auto">
                   <table style="width:100%">
@@ -1091,41 +1092,120 @@ export class KhoScreen {
                     </tr></thead><tbody>${hang}</tbody>
                   </table>
                 </div>
-                <input id="kkGhiChu" placeholder="Ghi chú (ca nào, ai đếm…)"
+                <input id="kkGhiChu" placeholder="Ghi chú (ca nào, ai đếm…)" value="${Formatter.an(ghiChuCu)}"
                   style="width:100%;margin-top:.7rem;padding:.5rem .7rem;border-radius:.5rem;
                          background:rgba(0,0,0,.25);border:1px solid rgba(212,175,55,.2);
                          color:inherit;font-size:.85rem">
               </div>`,
             preConfirm: () => {
                 const dong = [];
+                const go = {};
+                let sai = null;
                 document.querySelectorAll('.kk-o').forEach(o => {
-                    if (o.value.trim() === '') return;    // để trống = không đếm
-                    dong.push({ manl: parseInt(o.dataset.manl, 10),
-                                ton_thucte: parseFloat(o.value) });
+                    const v = o.value.trim();
+                    if (v === '') return;                 // để trống = không đếm
+                    go[o.dataset.manl] = v;
+                    // Máy chủ cũng kiểm; kiểm ở đây để chỉ đúng ô gõ sai ngay tại chỗ.
+                    if (!/^\d+([.,]\d+)?$/.test(v)) { sai = sai || o; return; }
+                    dong.push({ manl: parseInt(o.dataset.manl, 10), ton_thucte: v.replace(',', '.') });
                 });
+                if (sai) {
+                    sai.style.borderColor = '#B3261F';
+                    sai.focus();
+                    Swal.showValidationMessage(`Ô "${sai.value}" không phải là số. Để trống nếu không đếm mặt hàng đó.`);
+                    return false;
+                }
                 if (!dong.length) {
                     Swal.showValidationMessage('Chưa điền số đếm được của mặt hàng nào.');
                     return false;
                 }
-                return { dong, ghichu: document.getElementById('kkGhiChu')?.value || '' };
+                return { dong, go, ghichu: document.getElementById('kkGhiChu')?.value || '' };
             }
         }));
-
         if (!kq.isConfirmed) return;
+        const { dong, go, ghichu } = kq.value;
+
+        // Bước 1: chỉ xem chênh lệch, máy chủ không ghi gì.
+        const xem = await ApiClient.ghi('kho_nguyenlieu.php', {
+            action: 'kiemke', dong: JSON.stringify(dong), xem_truoc: '1'
+        });
+        if (xem.so_lech === 0) {
+            await Dialog.thanhCong('Khớp sổ',
+                `${xem.so_dem} nguyên liệu đã đếm đều khớp sổ — không cần điều chỉnh tồn.`);
+            return;
+        }
+
+        // Bước 2: xem lại chênh lệch, nhập lý do, rồi mới điều chỉnh tồn.
+        const hangLech = xem.chi_tiet.map(x => {
+            const tang = x.chenh_lech > 0;
+            return `<tr style="${x.lech_lon ? 'background:rgba(179,38,31,.08)' : ''}">
+              <td style="padding:.3rem .4rem">${Formatter.an(x.tennl)}
+                ${x.lech_lon ? '<div style="color:#B3261F;font-size:.72rem;font-weight:700">Lệch lớn — kiểm tra lại số đếm</div>' : ''}</td>
+              <td style="padding:.3rem .4rem;text-align:right">${this.soDep(x.ton_so)}</td>
+              <td style="padding:.3rem .4rem;text-align:right">${this.soDep(x.ton_thucte)}</td>
+              <td style="padding:.3rem .4rem;text-align:right;font-weight:700;color:${tang ? '#2E6B57' : '#B3261F'}">
+                ${tang ? '+' : '−'}${this.soDep(Math.abs(x.chenh_lech))} ${Formatter.an(x.donvi)}</td>
+            </tr>`;
+        }).join('');
+        const goiY = [...new Set(xem.chi_tiet.map(x => x.goi_y))]
+            .map(g => `<li>${Formatter.an(g)}</li>`).join('');
+
+        const xn = await Swal.fire(this._nenHopThoai({
+            title: `${xem.so_lech} nguyên liệu lệch sổ`,
+            icon: xem.co_lech_lon ? 'warning' : 'info',
+            width: 680,
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Điều chỉnh tồn theo số đếm',
+            denyButtonText: 'Đếm lại',
+            cancelButtonText: 'Hủy',
+            focusConfirm: false,
+            html: `
+              <div style="text-align:left;font-size:.85rem">
+                <div style="margin-bottom:.5rem">Tồn <b>chưa</b> bị sửa. Kiểm tra lại các dòng dưới đây:</div>
+                <div style="max-height:16rem;overflow-y:auto">
+                  <table style="width:100%">
+                    <thead><tr style="font-size:.7rem;color:#9aa;text-transform:uppercase">
+                      <th style="text-align:left;padding:.2rem .4rem">Nguyên liệu</th>
+                      <th style="text-align:right;padding:.2rem .4rem">Sổ</th>
+                      <th style="text-align:right;padding:.2rem .4rem">Đếm</th>
+                      <th style="text-align:right;padding:.2rem .4rem">Lệch</th>
+                    </tr></thead><tbody>${hangLech}</tbody>
+                  </table>
+                </div>
+                <ul style="margin:.6rem 0 .2rem 1rem;color:#9aa;font-size:.78rem">${goiY}</ul>
+                <input id="kkLyDo" placeholder="Lý do lệch (bắt buộc) — vd: đếm lại cuối ca, hàng hỏng chưa lập phiếu hủy"
+                  value="${Formatter.an(ghichu)}"
+                  style="width:100%;margin-top:.5rem;padding:.5rem .7rem;border-radius:.5rem;
+                         background:rgba(0,0,0,.25);border:1px solid rgba(212,175,55,.35);
+                         color:inherit;font-size:.85rem">
+              </div>`,
+            preConfirm: () => {
+                const ly = (document.getElementById('kkLyDo')?.value || '').trim();
+                if (ly.length < 3) {
+                    Swal.showValidationMessage('Nhập lý do lệch trước khi điều chỉnh tồn.');
+                    return false;
+                }
+                return ly;
+            }
+        }));
+        if (xn.isDenied) return this.moKiemKe(go, ghichu);
+        if (!xn.isConfirmed) return;
 
         const r = await ApiClient.ghi('kho_nguyenlieu.php', {
-            action: 'kiemke',
-            dong:   JSON.stringify(kq.value.dong),
-            ghichu: kq.value.ghichu
+            action: 'kiemke', dong: JSON.stringify(dong), ghichu: xn.value, xac_nhan: '1'
         });
-
-        if (r.so_lech === 0) {
-            await Dialog.thanhCong('Khớp sổ', r.message);
-        } else {
-            await Dialog.canhBao(r.message, r.chi_tiet.map(x =>
-                `${x.tennl}: sổ ${x.ton_so} → đếm ${x.ton_thucte} ` +
-                `(${x.chenh_lech > 0 ? '+' : ''}${x.chenh_lech})`).join('\n'));
-        }
+        // Không dùng Dialog.thanhCong: hộp đó tự đóng sau 1,2 giây, chưa kịp đọc
+        // đã điều chỉnh những gì.
+        await Swal.fire(this._nenHopThoai({
+            icon: 'success',
+            title: 'Đã điều chỉnh tồn',
+            confirmButtonText: 'Đóng',
+            html: `<div style="text-align:left;font-size:.85rem">${Formatter.an(r.message)}<ul style="margin:.5rem 0 0 1rem">` +
+                r.chi_tiet.map(x => `<li>${Formatter.an(x.tennl)}: sổ ${this.soDep(x.ton_so)} → đếm ` +
+                    `${this.soDep(x.ton_thucte)} (${x.chenh_lech > 0 ? '+' : ''}${this.soDep(x.chenh_lech)} ` +
+                    `${Formatter.an(x.donvi)})</li>`).join('') + '</ul></div>'
+        }));
         await this.nap();
     }
 
