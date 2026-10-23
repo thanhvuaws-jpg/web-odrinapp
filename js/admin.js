@@ -241,13 +241,20 @@ $(document).ready(function() {
             success: function(stats) {
                 if (stats.status === "error") return;
 
-                // Tính tổng doanh thu & đơn hàng
-                let totalRevenue = 0;
+                // Hai thẻ ghi "tháng này" nên chỉ cộng các ngày của tháng hiện
+                // tại. Trước đây cộng cả lịch sử, và "số đơn" lại là số DÒNG
+                // trả về — tức số ngày có bán, không phải số đơn.
+                const bayGio = new Date();
+                const thangNay = `${bayGio.getFullYear()}-${String(bayGio.getMonth() + 1).padStart(2, '0')}`;
+                let doanhThuThang = 0;
+                let soDonThang = 0;
                 stats.forEach(s => {
-                    totalRevenue += parseFloat(s.doanhthu);
+                    if (!String(s.ngay).startsWith(thangNay)) return;
+                    doanhThuThang += parseFloat(s.doanhthu) || 0;
+                    soDonThang += parseInt(s.sodon, 10) || 0;
                 });
-                $("#statRevenue").text(formatMoney(totalRevenue));
-                $("#statOrders").text(stats.length + " đơn");
+                $("#statRevenue").text(formatMoney(doanhThuThang));
+                $("#statOrders").text(soDonThang + " đơn");
 
                 // Chuẩn bị dữ liệu vẽ biểu đồ
                 const labels = stats.map(s => {
@@ -262,42 +269,69 @@ $(document).ready(function() {
     }
     loadOverviewStats(); // Load mặc định khi mở trang
 
+    // Toàn bộ chuỗi ngày nhận từ máy chủ; drawChart() cắt bớt theo bề rộng màn hình.
+    let duLieuBieuDo = { labels: [], data: [] };
+    let soNgayDangVe = 0;
+
+    /**
+     * Số ngày gần nhất hiện trên biểu đồ cột. Điện thoại mà nhồi cả trăm cột
+     * thì mỗi cột chỉ còn một sợi chỉ, không đọc được ngày nào ra ngày nào.
+     */
+    function soNgayTheoManHinh() {
+        const rong = window.innerWidth;
+        if (rong < 640) return 14;
+        if (rong < 1024) return 30;
+        return Infinity;
+    }
+
     function drawChart(labels, data) {
+        duLieuBieuDo = { labels, data };
+        const soNgay = Math.min(soNgayTheoManHinh(), labels.length);
+        soNgayDangVe = soNgay;
+        const nhan = labels.slice(-soNgay);
+        const giaTri = data.slice(-soNgay);
+
+        const tieuDePhu = document.getElementById('bieuDoKhoang');
+        if (tieuDePhu) {
+            tieuDePhu.textContent = soNgay < labels.length ? `${soNgay} ngày gần nhất` : `${labels.length} ngày`;
+        }
+
         const ctx = document.getElementById('revenueChart').getContext('2d');
         if (revenueChart) {
             revenueChart.destroy();
         }
 
-        // Nét son, vùng dưới đổ vàng nhạt dần — cùng màu biểu đồ trong app
-        const gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
-        gradientFill.addColorStop(0, 'rgba(217, 164, 65, 0.38)');
-        gradientFill.addColorStop(1, 'rgba(217, 164, 65, 0.00)');
+        // Cột sơn son đổ đậm xuống chân, như thẻ số trong app
+        const nenCot = ctx.createLinearGradient(0, 0, 0, 340);
+        nenCot.addColorStop(0, '#B3261F');
+        nenCot.addColorStop(1, '#5E0E0C');
 
         const gridColor = 'rgba(168, 119, 31, 0.14)';
         const textColor = '#7A6553';
-        
+
         revenueChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
-                labels: labels,
+                labels: nhan,
                 datasets: [{
                     label: 'Doanh thu (VNĐ)',
-                    data: data,
-                    borderColor: '#8E1B17',
-                    backgroundColor: gradientFill,
-                    borderWidth: 3.5,
-                    tension: 0.35,
-                    fill: true,
-                    pointBackgroundColor: '#D9A441',
-                    pointBorderColor: '#8E1B17',
-                    pointBorderWidth: 1.5,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
+                    data: giaTri,
+                    backgroundColor: nenCot,
+                    hoverBackgroundColor: '#D9A441',
+                    borderColor: '#5E0E0C',
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    borderSkipped: 'bottom',
+                    maxBarThickness: 34,
+                    categoryPercentage: 0.8,
+                    barPercentage: 0.9
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                // Chừa mép phải để nhãn ngày cuối không bị cắt nửa chữ
+                layout: { padding: { right: 10 } },
                 plugins: {
                     legend: {
                         display: false
@@ -319,9 +353,11 @@ $(document).ready(function() {
                 },
                 scales: {
                     y: {
+                        beginAtZero: true,
                         grid: {
                             color: gridColor
                         },
+                        border: { display: false },
                         ticks: {
                             color: textColor,
                             font: { family: 'Be Vietnam Pro' },
@@ -336,17 +372,31 @@ $(document).ready(function() {
                     },
                     x: {
                         grid: {
-                            color: gridColor
+                            display: false
                         },
                         ticks: {
                             font: { family: 'Be Vietnam Pro' },
-                            color: textColor
+                            color: textColor,
+                            maxRotation: 0,
+                            autoSkip: true,
+                            autoSkipPadding: 8
                         }
                     }
                 }
             }
         });
     }
+
+    // Xoay điện thoại / kéo cửa sổ qua mốc bề rộng thì vẽ lại với số ngày mới.
+    let henVeLai = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(henVeLai);
+        henVeLai = setTimeout(() => {
+            if (!duLieuBieuDo.labels.length) return;
+            const soNgay = Math.min(soNgayTheoManHinh(), duLieuBieuDo.labels.length);
+            if (soNgay !== soNgayDangVe) drawChart(duLieuBieuDo.labels, duLieuBieuDo.data);
+        }, 200);
+    });
 
     // 6. QUẢN LÝ THỰC ĐƠN (Tab Menu)
     /* ------------------------------------------------------------------
