@@ -21,7 +21,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=3.0">
+    <link rel="stylesheet" href="css/style.css?v=3.1">
 </head>
 <body>
 
@@ -80,11 +80,14 @@
             <div class="hero-badge animate-on-scroll">
                 <i class="fa-solid fa-star"></i> Tinh Hoa Ẩm Thực Thượng Hạng
             </div>
-            <h2 class="animate-on-scroll">
+            <!-- Chữ ở hero và ô liên hệ do quản lý sửa trong tab "Landing Page" của trang
+                 quản trị; js/main.js đọc lại từ /api/api/trang_chu.php. Chữ in sẵn ở đây
+                 chỉ là bản dự phòng khi chưa tải được (trùng giá trị mặc định của máy chủ). -->
+            <h2 class="animate-on-scroll" id="heroTieuDe">
                 Trải Nghiệm Ẩm Thực <br>
                 <em>Đỉnh Cao & Sang Trọng</em>
             </h2>
-            <p class="animate-on-scroll">
+            <p class="animate-on-scroll" id="heroMoTa">
                 Hương vị độc bản được chế tác tỉ mỉ bởi các đầu bếp hàng đầu. Không gian hoàng gia ấm cúng, đẳng cấp dành riêng cho những khoảnh khắc đáng nhớ của bạn.
             </p>
             <div class="hero-actions animate-on-scroll">
@@ -262,7 +265,7 @@
                             </div>
                             <div>
                                 <h4>Địa Chỉ Nhà Hàng</h4>
-                                <p>123 Đường Hoàng Gia, Quận 1, TP. Hồ Chí Minh</p>
+                                <p id="ttDiaChi">123 Đường Hoàng Gia, Quận 1, TP. Hồ Chí Minh</p>
                             </div>
                         </div>
 
@@ -272,7 +275,7 @@
                             </div>
                             <div>
                                 <h4>Giờ Mở Cửa</h4>
-                                <p>Thứ 2 - Chủ Nhật: 08:00 AM - 10:30 PM</p>
+                                <p id="ttGioMoCua">Thứ 2 - Chủ Nhật: 08:00 AM - 10:30 PM</p>
                             </div>
                         </div>
 
@@ -282,7 +285,7 @@
                             </div>
                             <div>
                                 <h4>Hotline Hỗ Trợ 24/7</h4>
-                                <p>1900 888 999 - (028) 3838 9999</p>
+                                <p id="ttHotline">1900 888 999 - (028) 3838 9999</p>
                             </div>
                         </div>
                     </div>
@@ -375,12 +378,6 @@
             </div>
 
             <div class="footer-col">
-                <h4>Dành Cho Hệ Thống</h4>
-                <a href="/quantri/"><i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập Quản Lý</a>
-                <a href="/quantri/cashier.html"><i class="fa-solid fa-cash-register"></i> Đăng Nhập Thu Ngân</a>
-            </div>
-
-            <div class="footer-col">
                 <h4>Hỗ Trợ</h4>
                 <a href="#">Chính Sách Bảo Mật</a>
                 <a href="#">Điều Khoản Dịch Vụ</a>
@@ -391,7 +388,6 @@
 
         <div class="footer-bottom">
             <p>© 2026 Royal Restaurant. All Rights Reserved. Powered by Royal POS Ecosystem.</p>
-            <p><i class="fa-solid fa-shield-halved"></i> Khóa Luận Tốt Nghiệp — Royal Restaurant POS</p>
         </div>
     </footer>
 
@@ -400,6 +396,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- MAIN JS -->
-    <script src="js/main.js?v=2.0"></script>
+    <script src="js/main.js?v=2.1"></script>
 </body>
 </html>

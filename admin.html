@@ -473,28 +473,28 @@
 
                         <form id="landingConfigForm" class="space-y-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Tiêu đề Hero Header</label>
-                                <input type="text" id="cfgHeroTitle" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" placeholder="Trải Nghiệm Ẩm Thực Đỉnh Cao & Sang Trọng">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Tiêu đề Hero Header <span class="normal-case tracking-normal font-normal">— phần sau dấu | là dòng chữ vàng</span></label>
+                                <input type="text" id="cfgHeroTitle" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" maxlength="255" placeholder="Trải Nghiệm Ẩm Thực|Đỉnh Cao & Sang Trọng">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Mô tả Hero ngắn</label>
-                                <textarea id="cfgHeroDesc" rows="3" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" placeholder="Hương vị độc bản được chế tác tỉ mỉ bởi các đầu bếp hàng đầu..."></textarea>
+                                <textarea id="cfgHeroDesc" rows="3" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" maxlength="255" placeholder="Hương vị độc bản được chế tác tỉ mỉ bởi các đầu bếp hàng đầu..."></textarea>
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Hotline Đặt Bàn</label>
-                                <input type="text" id="cfgHotline" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" placeholder="0909 123 456 — 028 3822 9999">
+                                <input type="text" id="cfgHotline" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" maxlength="255" placeholder="0909 123 456 — 028 3822 9999">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Địa Chỉ Nhà Hàng</label>
-                                <input type="text" id="cfgAddress" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" placeholder="123 Đường Hoàng Gia, Quận 1, TP. Hồ Chí Minh">
+                                <input type="text" id="cfgAddress" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" maxlength="255" placeholder="123 Đường Hoàng Gia, Quận 1, TP. Hồ Chí Minh">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Giờ Mở Cửa</label>
-                                <input type="text" id="cfgHours" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" placeholder="Thứ 2 - Chủ Nhật: 10:00 AM - 11:00 PM">
+                                <input type="text" id="cfgHours" class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gold-400/20 text-white text-sm focus:border-gold-400 focus:outline-none" maxlength="255" placeholder="Thứ 2 - Chủ Nhật: 10:00 AM - 11:00 PM">
                             </div>
 
                             <button type="submit" class="w-full py-3 rounded-xl bg-gold-400 text-royal-900 font-bold hover:bg-gold-300 transition-all text-xs uppercase tracking-wider flex items-center justify-center space-x-2">
@@ -537,7 +537,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/config.js?v=1.2"></script>
-    <script src="js/admin.js?v=4.3"></script>
+    <script src="js/admin.js?v=4.4"></script>
     <script src="js/music-player.js?v=2.1"></script>
 
     <!-- Kiến trúc mới (ES module). Hiện quản lý màn hình Danh mục; các màn

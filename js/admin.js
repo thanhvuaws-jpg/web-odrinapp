@@ -1029,34 +1029,62 @@ $(document).ready(function() {
     // ============================================
     // QUẢN LÝ LANDING PAGE (TAB LANDING)
     // ============================================
+    // Nội dung chữ của trang giới thiệu lưu trên máy chủ (api/trang_chu.php đọc,
+    // api/cap_nhat_trang_chu.php ghi). Trước đây chỉ lưu vào localStorage của
+    // trình duyệt đang sửa — báo "Đã lưu" nhưng trang khách không đổi gì.
+    const O_TRANG_CHU = {
+        tieu_de: '#cfgHeroTitle',
+        mo_ta: '#cfgHeroDesc',
+        hotline: '#cfgHotline',
+        dia_chi: '#cfgAddress',
+        gio_mo_cua: '#cfgHours'
+    };
+
     function loadLandingConfig() {
-        const config = JSON.parse(localStorage.getItem('ROYAL_LANDING_CONFIG') || '{}');
-        $("#cfgHeroTitle").val(config.heroTitle || "Trải Nghiệm Ẩm Thực Đỉnh Cao & Sang Trọng");
-        $("#cfgHeroDesc").val(config.heroDesc || "Hương vị độc bản được chế tác tỉ mỉ bởi các đầu bếp hàng đầu trong không gian thượng hạng.");
-        $("#cfgHotline").val(config.hotline || "0909 123 456 — 028 3822 9999");
-        $("#cfgAddress").val(config.address || "123 Đường Hoàng Gia, Quận 1, TP. Hồ Chí Minh");
-        $("#cfgHours").val(config.hours || "Thứ 2 - Chủ Nhật: 10:00 AM - 11:00 PM");
+        localStorage.removeItem('ROYAL_LANDING_CONFIG'); // bản lưu cũ, không còn dùng
+        $.ajax({
+            url: CONFIG.BASE_URL + "api/trang_chu.php",
+            type: "GET",
+            cache: false,
+            dataType: "json",
+            success: function(res) {
+                const d = (res && res.data) || {};
+                Object.entries(O_TRANG_CHU).forEach(([truong, o]) => $(o).val(d[truong] || ''));
+            },
+            error: function() {
+                Swal.fire({ icon: 'error', title: 'Không tải được nội dung trang chủ',
+                            text: 'Kiểm tra kết nối rồi mở lại tab này.' });
+            }
+        });
     }
 
     $("#landingConfigForm").submit(function(e) {
         e.preventDefault();
-        const config = {
-            heroTitle: $("#cfgHeroTitle").val().trim(),
-            heroDesc: $("#cfgHeroDesc").val().trim(),
-            hotline: $("#cfgHotline").val().trim(),
-            address: $("#cfgAddress").val().trim(),
-            hours: $("#cfgHours").val().trim()
-        };
-        localStorage.setItem('ROYAL_LANDING_CONFIG', JSON.stringify(config));
+        const duLieu = {};
+        Object.entries(O_TRANG_CHU).forEach(([truong, o]) => { duLieu[truong] = $(o).val().trim(); });
+        const nut = $(this).find('button[type="submit"]').prop('disabled', true);
 
-        Swal.fire({
-            icon: 'success',
-            title: 'Đã lưu cấu hình!',
-            text: 'Nội dung Landing Page đã được cập nhật thành công.',
-            timer: 1500,
-            showConfirmButton: false,
-            background: getSwalBg(),
-            color: getSwalColor()
+        $.ajax({
+            url: CONFIG.BASE_URL + "api/cap_nhat_trang_chu.php",
+            type: "POST",
+            data: duLieu,
+            dataType: "json",
+            success: function(res) {
+                const d = (res && res.data) || {};
+                Object.entries(O_TRANG_CHU).forEach(([truong, o]) => $(o).val(d[truong] || ''));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Đã lưu nội dung trang chủ',
+                    text: res.message || 'Trang giới thiệu hiện nội dung mới khi khách tải lại trang.',
+                    confirmButtonText: 'Đóng'
+                });
+            },
+            error: function(xhr) {
+                let lyDo = 'Không lưu được, vui lòng thử lại.';
+                try { lyDo = JSON.parse(xhr.responseText).message || lyDo; } catch (e) {}
+                Swal.fire({ icon: 'error', title: 'Chưa lưu được', text: lyDo, confirmButtonText: 'Đóng' });
+            },
+            complete: function() { nut.prop('disabled', false); }
         });
     });
 

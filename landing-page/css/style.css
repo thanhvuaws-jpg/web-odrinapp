@@ -341,7 +341,7 @@ img { max-width: 100%; }
 /* --- Chân trang --- */
 .footer { background: var(--then); color: #D7C6AC; border-top: 2px solid var(--vang); }
 .footer-grid {
-    max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px;
+    max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 40px;
     padding-block: 56px 36px;
     padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
 }
@@ -363,7 +363,6 @@ img { max-width: 100%; }
     padding-block: 18px 22px; border-top: 1px solid rgba(255, 227, 160, .18); font-size: .8rem;
     padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
 }
-.footer-bottom p:last-child { color: var(--vang); }
 
 /* --- Chuyển động khi cuộn --- */
 @keyframes float {

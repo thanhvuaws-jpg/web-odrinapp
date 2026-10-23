@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     initScrollAnimations();
     napThucDon();          // nap thuc don tu API (bat dong bo)
+    napNoiDungTrangChu();  // tieu de, mo ta, lien he do quan ly sua trong trang quan tri
     initBookingForm();
     initSmoothScroll();
 });
@@ -185,6 +186,48 @@ async function napThucDon() {
                 '<p class="menu-trang-thai">Không tải được thực đơn. ' +
                 'Vui lòng thử lại hoặc liên hệ nhà hàng qua hotline.</p>';
         }
+    }
+}
+
+/* ==========================================================================
+   NỘI DUNG CHỮ — DO QUẢN LÝ SỬA TRONG TAB "LANDING PAGE"
+   ==========================================================================
+   Đọc từ /api/api/trang_chu.php (công khai, chỉ đọc). Trước đây trang quản
+   trị lưu phần này vào localStorage của chính trình duyệt đang sửa nên trang
+   này không bao giờ đổi theo. Tải lỗi thì giữ nguyên chữ in sẵn trong HTML.
+
+   Tiêu đề: phần sau dấu "|" là dòng chữ vàng thứ hai.
+   Gán bằng textContent — chữ do người nhập, không chèn như HTML.
+   ========================================================================== */
+async function napNoiDungTrangChu() {
+    try {
+        const phanHoi = await fetch(API_GOC + 'api/trang_chu.php', { cache: 'no-store' });
+        const kq = await phanHoi.json();
+        if (kq.status !== 'success' || !kq.data) return;
+        const d = kq.data;
+
+        const tieuDe = document.getElementById('heroTieuDe');
+        if (tieuDe && d.tieu_de) {
+            const [dong1, ...conLai] = String(d.tieu_de).split('|');
+            tieuDe.textContent = dong1.trim();
+            const dong2 = conLai.join('|').trim();
+            if (dong2) {
+                const em = document.createElement('em');
+                em.textContent = dong2;
+                tieuDe.append(document.createElement('br'), em);
+            }
+        }
+
+        const ganChu = (id, giaTri) => {
+            const el = document.getElementById(id);
+            if (el && giaTri) el.textContent = giaTri;
+        };
+        ganChu('heroMoTa', d.mo_ta);
+        ganChu('ttDiaChi', d.dia_chi);
+        ganChu('ttGioMoCua', d.gio_mo_cua);
+        ganChu('ttHotline', d.hotline);
+    } catch (loi) {
+        console.warn('Không tải được nội dung trang chủ, giữ chữ mặc định:', loi);
     }
 }
 
