@@ -45,17 +45,17 @@ document.addEventListener("DOMContentLoaded", () => {
             width: 3px;
         }
         #royal-music-playlist::-webkit-scrollbar-thumb {
-            background: rgba(212, 175, 55, 0.4);
+            background: rgba(168, 119, 31, 0.45);
             border-radius: 10px;
         }
         /* Custom range styles to ensure golden look */
         .royal-range::-webkit-slider-runnable-track {
-            background: #1e293b;
+            background: #EFE2CA;
             height: 4px;
             border-radius: 4px;
         }
         .royal-range::-webkit-slider-thumb {
-            background: #fbbf24;
+            background: #8E1B17;
             height: 10px;
             width: 10px;
             border-radius: 50%;
@@ -75,16 +75,16 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <!-- Floating Button -->
-        <div id="royal-music-btn" class="fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110 active:scale-95" style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); border: 2px solid #d4af37; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);">
-            <div id="royal-music-disc" class="w-10 h-10 rounded-full flex items-center justify-center bg-cover bg-center border border-amber-500/30 royal-spin royal-spin-paused" style="background-image: url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=120');">
+        <div id="royal-music-btn" class="fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110 active:scale-95" style="background: radial-gradient(circle at 35% 30%, #8E1B17, #5E0E0C 70%); border: 2px solid #D9A441; box-shadow: 0 10px 22px -10px rgba(31, 18, 13, 0.7);">
+            <div id="royal-music-disc" class="w-10 h-10 rounded-full flex items-center justify-center bg-cover bg-center border border-amber-500/30 royal-spin royal-spin-paused" style="background-image: url('img/son-son/hoanh.jpg');">
                 <div class="w-3.5 h-3.5 rounded-full bg-slate-950 flex items-center justify-center border border-amber-500/50">
-                    <i class="fa-solid fa-music text-[7px] text-[#d4af37] animate-pulse"></i>
+                    <i class="fa-solid fa-music text-[7px] text-vang-dam animate-pulse"></i>
                 </div>
             </div>
         </div>
 
         <!-- Music Panel -->
-        <div id="royal-music-panel" class="fixed bottom-24 right-6 z-[9999] w-72 rounded-2xl p-4 transition-all duration-300 origin-bottom-right scale-0 opacity-0" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(212, 175, 55, 0.3); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);">
+        <div id="royal-music-panel" class="fixed bottom-24 right-6 z-[9999] w-72 rounded-2xl p-4 transition-all duration-300 origin-bottom-right scale-0 opacity-0" style="background: #FFFDF8; border: 1px solid rgba(217, 164, 65, 0.55); box-shadow: 0 18px 40px -18px rgba(31, 18, 13, 0.55);">
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-amber-500/20 pb-2 mb-3">
                 <div class="flex items-center space-x-2">
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <!-- Track Info -->
             <div class="flex items-center space-x-3 mb-3">
-                <div id="royal-music-cd" class="w-12 h-12 rounded-full flex items-center justify-center bg-cover bg-center border border-amber-500/30 shadow-md flex-shrink-0 royal-spin royal-spin-paused" style="background-image: url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=200');">
+                <div id="royal-music-cd" class="w-12 h-12 rounded-full flex items-center justify-center bg-cover bg-center border border-amber-500/30 shadow-md flex-shrink-0 royal-spin royal-spin-paused" style="background-image: url('img/son-son/hoanh.jpg');">
                     <div class="w-3.5 h-3.5 rounded-full bg-slate-950 flex items-center justify-center border border-amber-500/50"></div>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <!-- Controls -->
             <div class="flex items-center justify-between mb-2.5 px-3">
                 <button id="royal-music-prev" class="text-gray-400 hover:text-amber-400 transition-colors text-sm"><i class="fa-solid fa-backward-step"></i></button>
-                <button id="royal-music-play" class="w-9 h-9 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center hover:scale-105 active:scale-95 transition-all text-sm shadow-[0_0_10px_rgba(251,191,36,0.3)]"><i class="fa-solid fa-play ml-0.5"></i></button>
+                <button id="royal-music-play" class="w-9 h-9 rounded-full bg-son text-vang-sang flex items-center justify-center hover:scale-105 active:scale-95 transition-all text-sm shadow-[0_0_10px_rgba(251,191,36,0.3)]"><i class="fa-solid fa-play ml-0.5"></i></button>
                 <button id="royal-music-next" class="text-gray-400 hover:text-amber-400 transition-colors text-sm"><i class="fa-solid fa-forward-step"></i></button>
                 <button id="royal-music-list-toggle" class="text-gray-400 hover:text-amber-400 transition-colors text-sm"><i class="fa-solid fa-list-ul"></i></button>
             </div>
@@ -295,11 +295,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const items = listPlaylist.querySelectorAll(".track-item");
         items.forEach((item, idx) => {
             if (idx === index) {
-                item.style.backgroundColor = "rgba(212, 175, 55, 0.15)";
-                item.style.color = "#fbbf24";
+                item.style.backgroundColor = "rgba(217, 164, 65, 0.18)";
+                item.style.color = "#8E1B17";
             } else {
                 item.style.backgroundColor = "transparent";
-                item.style.color = "#94a3b8";
+                item.style.color = "#7A6553";
             }
         });
     }
@@ -543,7 +543,7 @@ document.addEventListener("DOMContentLoaded", () => {
             isPlaylistOpen = false;
         } else {
             listPlaylist.classList.remove("hidden");
-            btnListToggle.style.color = "#fbbf24";
+            btnListToggle.style.color = "#8E1B17";
             isPlaylistOpen = true;
         }
     });

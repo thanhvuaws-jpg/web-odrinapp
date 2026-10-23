@@ -59,7 +59,10 @@ export class ChatScreen {
     async moLai() {
         this.tabDangMo = true;
         await this.napDanhSach();
+        // Chưa chọn hội thoại nào thì khung phải vẫn hiện lời nhắc chọn,
+        // không để trống trơn như thể trang bị lỗi.
         if (this.dangMo) await this.moHoiThoai(this.dangMo.MAHOITHOAI);
+        else this._veKhungChat();
         this._batHoiLai();
     }
 
@@ -198,7 +201,7 @@ export class ChatScreen {
         if (!this.danhSach.length) {
             khung.innerHTML = `
                 <div class="p-8 text-center text-gray-500 text-sm">
-                    <i class="fa-regular fa-comments text-3xl mb-3 block opacity-40"></i>
+                    <img src="img/son-son/hh_chat_mo.webp" alt="" class="w-14 h-14 mx-auto mb-3 opacity-80">
                     Chưa có cuộc trò chuyện nào.
                 </div>`;
             return;
@@ -321,7 +324,7 @@ export class ChatScreen {
             khung.innerHTML = `
                 <div class="h-full grid place-items-center text-gray-500 text-sm">
                     <div class="text-center">
-                        <i class="fa-regular fa-comment-dots text-4xl mb-3 block opacity-30"></i>
+                        <img src="img/son-son/hh_chat.webp" alt="" class="w-16 h-16 mx-auto mb-3">
                         Chọn một cuộc trò chuyện bên trái để bắt đầu.
                     </div>
                 </div>`;

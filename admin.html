@@ -1,40 +1,27 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<!-- Giữ class "dark": cả trang dùng biến thể dark: của Tailwind, còn bảng màu
+     trong js/son-son-mau.js đã đảo sang nền sáng Sơn Son. Xem tệp đó. -->
+<html lang="vi" class="dark son-son">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Lý Hệ Thống | Royal Restaurant</title>
-    
-    <!-- Google Fonts -->
+
+    <!-- Google Fonts: Baloo 2 cho tiêu đề, Be Vietnam Pro cho chữ — cùng bộ với app -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Playfair Display cho Tiêu đề, Plus Jakarta Sans cho dữ liệu dễ đọc -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/son-son-mau.js?v=1"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        serif: ['"Playfair Display"', 'serif'],
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                    },
-                    colors: {
-                        gold: {
-                            300: '#F3E5AB',
-                            400: '#D4AF37',
-                            500: '#C5A017',
-                            600: '#AA8811',
-                        },
-                        royal: {
-                            900: '#0a0a0a',
-                            800: '#141414',
-                            700: '#1f1f1f',
-                        }
-                    },
+                    fontFamily: SON_SON_FONT,
+                    colors: SON_SON_MAU,
                     animation: {
                         'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -49,7 +36,7 @@
             }
         }
     </script>
-    
+
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
@@ -58,78 +45,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* Hình nền tổng thể */
-        body {
-            background-image: url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-
-        /* Lớp phủ background */
-        .bg-overlay {
-            background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(26, 26, 26, 0.85) 100%);
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-        }
-        .light .bg-overlay {
-            background: linear-gradient(135deg, rgba(250, 250, 250, 0.9) 0%, rgba(230, 230, 230, 0.8) 100%);
-        }
-
-        /* Hiệu ứng Kính Mờ (Glassmorphism) */
-        .glass-panel {
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-        .light .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        /* Hover Cards */
-        .glass-card-hover:hover {
-            transform: translateY(-3px);
-            border-color: rgba(212, 175, 55, 0.6);
-            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.15);
-        }
-
-        /* Navigation active state */
-        .nav-item-active {
-            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15) 0%, transparent 100%);
-            color: #D4AF37 !important;
-            border-left: 3px solid #D4AF37;
-        }
-
         /* Table styles */
         tbody tr {
             transition: background 0.2s ease;
         }
-        tbody tr:hover {
-            background: rgba(212, 175, 55, 0.05);
-        }
 
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(212, 175, 55, 0.3);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(212, 175, 55, 0.6);
-        }
-        
         /* fadeInUp trước đây chỉ khai báo trong tailwind.config nên Tailwind CDN
            không sinh ra @keyframes (nó chỉ sinh khi thấy class animate-fade-in-up
            trong HTML, còn đây gọi thẳng tên animation trong CSS thuần).
@@ -150,103 +70,51 @@
         .delay-100 { animation-delay: 100ms; }
         .delay-200 { animation-delay: 200ms; }
         .delay-300 { animation-delay: 300ms; }
-        /* --- Ambient Background Effects --- */
-        .ambient-background {
-            position: fixed; inset: 0; z-index: -1;
-            pointer-events: none; overflow: hidden;
-        }
-        .glow-orb {
-            position: absolute; border-radius: 50%;
-            filter: blur(130px); opacity: 0.3;
-            animation: orbFloat 22s ease-in-out infinite alternate;
-        }
-        .orb-1 {
-            width: 600px; height: 600px; top: -100px; left: -100px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.45) 0%, rgba(170, 136, 17, 0.15) 60%, transparent 100%);
-            animation-duration: 22s;
-        }
-        .orb-2 {
-            width: 500px; height: 500px; top: 40%; right: -150px;
-            background: radial-gradient(circle, rgba(243, 229, 171, 0.35) 0%, rgba(168, 85, 247, 0.15) 70%, transparent 100%);
-            animation-duration: 18s; animation-delay: -6s;
-        }
-        .orb-3 {
-            width: 700px; height: 700px; bottom: -200px; left: 20%;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(16, 185, 129, 0.15) 65%, transparent 100%);
-            animation-duration: 26s; animation-delay: -12s;
-        }
-        @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(60px, 80px) scale(1.15); }
-            100% { transform: translate(-40px, 40px) scale(0.92); }
-        }
-        .particles-container { position: absolute; inset: 0; }
-        .gold-particle {
-            position: absolute; border-radius: 50%;
-            background: radial-gradient(circle, #ffffff 0%, #F3E5AB 40%, #D4AF37 80%, transparent 100%);
-            box-shadow: 0 0 12px rgba(212, 175, 55, 0.9), 0 0 24px rgba(243, 229, 171, 0.6);
-            animation: particleRise linear infinite;
-        }
-        @keyframes particleRise {
-            0% { transform: translateY(105vh) scale(0.2) rotate(0deg); opacity: 0; }
-            15% { opacity: 0.85; }
-            85% { opacity: 0.7; }
-            100% { transform: translateY(-10vh) scale(1.3) rotate(360deg); opacity: 0; }
-        }
     </style>
+    <link rel="stylesheet" href="css/son-son.css?v=1">
 </head>
-<body class="font-sans antialiased text-white min-h-screen flex transition-colors duration-500">
+<body class="font-sans antialiased text-white min-h-screen flex">
 
-    <!-- Lớp phủ Background -->
-    <div class="bg-overlay transition-colors duration-500"></div>
-
-    <!-- AMBIENT GLOW & GOLDEN DUST BACKGROUND -->
-    <div class="ambient-background">
-        <div class="glow-orb orb-1"></div>
-        <div class="glow-orb orb-2"></div>
-        <div class="glow-orb orb-3"></div>
-        <div id="goldParticles" class="particles-container"></div>
-    </div>
-
-    <!-- Left Sidebar -->
-    <aside id="sidebar" class="w-64 flex flex-col h-screen fixed left-0 top-0 z-30 glass-panel border-r-0 border-r border-gold-400/20 -translate-x-full lg:translate-x-0 transition-transform duration-300">
-        <!-- Logo -->
-        <div class="p-6 border-b border-gold-400/10 flex items-center space-x-4 mt-2">
-            <div class="w-12 h-12 rounded-full border border-gold-400 flex items-center justify-center bg-royal-900/50 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-gold-400/20 group-hover:bg-gold-400/40 transition-colors"></div>
-                <i class="fa-solid fa-crown text-xl text-gold-400 relative z-10"></i>
+    <!-- Thanh bên sơn son: tấm hoành ở đầu, huy hiệu cho từng mục, sen chìm
+         và sóng vàng ở đáy (vẽ bằng ::before/::after trong css/son-son.css).
+         Mỗi mục có hai ảnh huy hiệu — bản mờ khi chưa chọn, bản rõ khi đang
+         chọn — để admin.js chỉ cần bật/tắt class nav-item-active như cũ. -->
+    <aside id="sidebar" class="ss-ben w-64 flex flex-col h-screen fixed left-0 top-0 z-30 -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="ss-ben-dau">
+            <div class="ss-logo">
+                <img src="img/son-son/logo.webp" alt="">
+                <div><b>ROYAL</b><small>Quản trị</small></div>
             </div>
-            <div>
-                <h1 class="text-xl font-serif font-bold tracking-wider text-white light:text-royal-900">ROYAL</h1>
-                <p class="text-[10px] text-gold-400 uppercase tracking-widest font-medium">Administration</p>
+            <div class="ss-nguoi">
+                <span id="adminVietTat" class="ss-viet-tat">QL</span>
+                <div class="min-w-0">
+                    <b id="adminName">Quản lý</b>
+                    <small><i></i>Trực tuyến</small>
+                </div>
             </div>
         </div>
 
-        <!-- Navigation Menu -->
-        <nav class="flex-1 p-4 space-y-2 mt-4" id="mainNav">
-            <a href="#" id="nav-overview" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium nav-item-active">
-                <i class="fa-solid fa-chart-pie text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Tổng quan</span>
+        <nav class="ss-menu flex-1" id="mainNav">
+            <div class="ss-nhom">Điều hành</div>
+            <a href="#" id="nav-overview" class="nav-item nav-item-active">
+                <img class="hh-tat" src="img/son-son/hh_thong_ke_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_thong_ke.webp" alt="">
+                <span>Tổng quan</span>
             </a>
-            <a href="#" id="nav-menu" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-concierge-bell text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Thực đơn</span>
+            <a href="#" id="nav-menu" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_thuc_don_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_thuc_don.webp" alt="">
+                <span>Thực đơn</span>
             </a>
-            <a href="#" id="nav-staff" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-user-tie text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Nhân viên</span>
+            <a href="#" id="nav-tables" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_ban_an_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_ban_an.webp" alt="">
+                <span>Bàn ăn</span>
             </a>
-            <a href="#" id="nav-tables" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-chair text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Bàn ăn</span>
+            <a href="#" id="nav-bookings" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_dat_lich_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_dat_lich.webp" alt="">
+                <span>Đặt bàn</span>
             </a>
-            <a href="#" id="nav-bookings" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-calendar-check text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Đặt bàn</span>
-            </a>
-            <a href="#" id="nav-kho" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-warehouse text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Kho nguyên liệu</span>
+            <a href="#" id="nav-kho" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_kho_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_kho.webp" alt="">
+                <span>Kho nguyên liệu</span>
                 <!--
                     Huy hieu so nguyen lieu can chu y (het / sap het / ton am).
                     Cap nhat ke ca khi tab dong, cung ly do voi huy hieu chat:
@@ -256,13 +124,19 @@
                       class="hidden ml-auto min-w-5 h-5 px-1.5 rounded-full bg-orange-500
                              text-white text-[11px] font-bold grid place-items-center"></span>
             </a>
-            <a href="#" id="nav-vouchers" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-ticket text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Voucher</span>
+
+            <div class="ss-nhom">Con người &amp; khách</div>
+            <a href="#" id="nav-staff" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_nhan_vien_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_nhan_vien.webp" alt="">
+                <span>Nhân viên</span>
             </a>
-            <a href="#" id="nav-chat" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-headset text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Chăm sóc KH</span>
+            <a href="#" id="nav-vouchers" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_qua_tang_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_qua_tang.webp" alt="">
+                <span>Voucher</span>
+            </a>
+            <a href="#" id="nav-chat" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_chat_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_chat.webp" alt="">
+                <span>Chăm sóc KH</span>
                 <!--
                     Huy hiệu số cuộc trò chuyện đang chờ. Cập nhật kể cả khi
                     tab này KHÔNG mở — đó là toàn bộ lý do nó tồn tại: nhân
@@ -273,86 +147,60 @@
                       class="hidden ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500
                              text-white text-[11px] font-bold grid place-items-center"></span>
             </a>
-            <a href="#" id="nav-landing" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all font-medium border-left-transparent border-l-3">
-                <i class="fa-solid fa-globe text-lg w-6 text-center"></i>
-                <span class="tracking-wide text-sm">Landing Page Khách</span>
+            <a href="#" id="nav-landing" class="nav-item">
+                <img class="hh-tat" src="img/son-son/hh_trang_chu_mo.webp" alt=""><img class="hh-bat" src="img/son-son/hh_trang_chu.webp" alt="">
+                <span>Landing Page Khách</span>
             </a>
         </nav>
 
-        <!-- Profile / Settings -->
-        <div class="p-5 border-t border-gold-400/10 space-y-5 bg-black/20">
-            <!-- Theme Toggle -->
-            <div class="flex items-center justify-between px-1">
-                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Giao diện</span>
-                <button id="themeToggle" class="w-8 h-8 rounded-full bg-white/5 border border-gold-400/30 text-gold-400 hover:bg-gold-400 hover:text-royal-900 transition-all flex items-center justify-center">
-                    <i class="fa-solid fa-moon text-sm dark:hidden"></i>
-                    <i class="fa-solid fa-sun text-sm hidden dark:block"></i>
-                </button>
-            </div>
-
-            <!-- User Info -->
-            <div class="flex items-center space-x-3 px-1">
-                <div class="w-10 h-10 rounded-full bg-gold-400 flex items-center justify-center text-royal-900 font-bold text-lg shadow-[0_0_15px_rgba(212,175,55,0.4)]">
-                    Q
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p id="adminName" class="text-sm font-bold text-white light:text-royal-900 truncate">Quản lý</p>
-                    <p class="text-[10px] text-green-400 flex items-center mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse-slow"></span> Trực tuyến
-                    </p>
-                </div>
-            </div>
-
-            <!-- Logout -->
-            <button id="logoutBtn" class="w-full py-2.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all font-semibold flex items-center justify-center space-x-2 text-xs uppercase tracking-wider mt-2">
-                <i class="fa-solid fa-right-from-bracket"></i>
+        <div class="ss-ben-cuoi">
+            <button id="logoutBtn" class="nav-item" type="button">
+                <img src="img/son-son/hh_dang_xuat_mo.webp" alt="">
                 <span>Đăng xuất</span>
             </button>
         </div>
     </aside>
-
     <!-- Right Content Container -->
     <div class="flex-1 lg:pl-64 flex flex-col h-screen overflow-hidden">
         
-        <!-- Top Header -->
-        <header class="w-full h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between border-b border-gold-400/10 glass-panel !border-x-0 !border-t-0 rounded-none z-20 sticky top-0">
-            <div class="flex items-center space-x-3">
+        <!-- Thanh đầu là tấm hoành, giống đầu màn hình trong app -->
+        <header class="ss-dau w-full h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between z-20 sticky top-0 shrink-0">
+            <div class="flex items-center space-x-3 min-w-0">
                 <!-- Hamburger button (mobile only) -->
-                <button id="menuToggle" class="lg:hidden w-9 h-9 rounded-lg border border-gold-400/30 flex items-center justify-center text-gold-400 hover:bg-gold-400/10 transition-all flex-shrink-0">
+                <button id="menuToggle" class="ss-chip inline-flex lg:hidden w-9 h-9 flex-shrink-0" aria-label="Mở menu">
                     <i class="fa-solid fa-bars text-sm"></i>
                 </button>
-                <div>
-                    <h2 id="pageTitle" class="text-base lg:text-2xl font-serif font-bold text-white tracking-wide">Tổng Quan Thống Kê</h2>
-                    <p id="pageSubtitle" class="text-xs text-gray-400 mt-0.5 uppercase tracking-widest hidden sm:block">Báo cáo hiệu suất thời gian thực</p>
+                <div class="min-w-0">
+                    <h2 id="pageTitle" class="text-lg lg:text-[26px] leading-tight truncate">Tổng Quan Thống Kê</h2>
+                    <p id="pageSubtitle" class="text-xs mt-0.5 hidden sm:block truncate">Báo cáo hiệu suất thời gian thực</p>
                 </div>
             </div>
-            
-            <div class="flex items-center space-x-3 lg:space-x-6">
+
+            <div class="flex items-center gap-2 lg:gap-3 flex-shrink-0">
                 <!-- Live Clock (hidden on small screens) -->
-                <div class="text-right hidden md:block">
-                    <div id="liveTime" class="text-base lg:text-xl font-light tracking-widest text-gold-400"><i class="fa-regular fa-clock mr-1"></i>00:00:00</div>
-                </div>
+                <div id="liveTime" class="ss-chip hidden md:inline-flex"><i class="fa-regular fa-clock"></i>00:00:00</div>
+
                 <!-- Notifications -->
                 <div class="relative">
-                    <button id="notifBtn" class="relative w-9 h-9 lg:w-10 lg:h-10 rounded-full border border-gold-400/30 flex items-center justify-center text-gold-400 hover:bg-gold-400 hover:text-royal-900 transition-all">
+                    <button id="notifBtn" class="ss-chip inline-flex relative w-9 h-9 lg:w-10 lg:h-10" aria-label="Thông báo">
                         <i class="fa-regular fa-bell text-sm"></i>
-                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 border-2 border-royal-900 rounded-full text-[10px] font-black text-white flex items-center justify-center px-1 leading-none">0</span>
+                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] border-2 rounded-full text-[10px] font-black flex items-center justify-center px-1 leading-none">0</span>
                     </button>
 
                     <!-- Notification Dropdown -->
-                    <div id="notifPanel" class="hidden absolute right-0 top-12 w-80 glass-panel rounded-2xl shadow-2xl z-50 overflow-hidden" style="border:1px solid rgba(212,175,55,0.25);">
+                    <div id="notifPanel" class="hidden absolute right-0 top-12 w-80 glass-panel rounded-2xl z-50 overflow-hidden">
                         <!-- Panel Header -->
-                        <div class="flex items-center justify-between px-4 py-3 border-b border-gold-400/10">
-                            <h4 class="text-sm font-bold text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-bell text-gold-400 text-xs"></i>
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-gold-400/10 bg-kem-dam/60">
+                            <h4 class="text-sm font-bold text-son-dam flex items-center space-x-2">
+                                <i class="fa-solid fa-bell text-vang-dam text-xs"></i>
                                 <span>Thông báo hôm nay</span>
                             </h4>
-                            <button id="notifMarkAllRead" class="text-[10px] text-gold-400 hover:text-gold-300 transition-colors uppercase tracking-wider font-semibold">Xoá tất cả</button>
+                            <button id="notifMarkAllRead" class="text-[11px] text-son hover:text-son-sang transition-colors font-semibold">Xoá tất cả</button>
                         </div>
                         <!-- Panel List -->
-                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-white/5">
-                            <div id="notifEmpty" class="flex flex-col items-center justify-center py-8 text-gray-500">
-                                <i class="fa-regular fa-bell-slash text-2xl mb-2 opacity-40"></i>
+                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gold-400/5">
+                            <div id="notifEmpty" class="flex flex-col items-center justify-center py-8 text-chu-mo">
+                                <img src="img/son-son/hh_chat_mo.webp" alt="" class="w-12 h-12 mb-2 opacity-70">
                                 <p class="text-xs">Chưa có thông báo nào</p>
                             </div>
                         </div>
@@ -365,58 +213,42 @@
         <main class="flex-1 p-8 overflow-y-auto relative z-10" id="mainContent">
             
             <!-- SECTION 1: OVERVIEW PAGE -->
-            <div id="tab-overview-content" class="space-y-8 tab-content">
-                <!-- KPI cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    
-                    <!-- Card 1: Revenue -->
-                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden">
-                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-wallet"></i></div>
-                        <div class="space-y-2 relative z-10">
-                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Doanh thu tháng này</span>
-                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statRevenue">0đ</h3>
-                        </div>
+            <div id="tab-overview-content" class="space-y-6 tab-content">
+
+                <!-- KPI cards: huy hiệu bên trái, nhãn và số bên phải như thẻ số trong app -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
+                    <div class="glass-panel glass-card-hover rounded-2xl ss-the-so">
+                        <img src="img/son-son/hh_thu_ngan.webp" alt="">
+                        <small>Doanh thu tháng này</small>
+                        <b id="statRevenue">0đ</b>
                     </div>
-                    
-                    <!-- Card 2: Orders -->
-                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden delay-100">
-                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-receipt"></i></div>
-                        <div class="space-y-2 relative z-10">
-                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Đơn hàng hoàn thành</span>
-                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statOrders">0 đơn</h3>
-                        </div>
+                    <div class="glass-panel glass-card-hover rounded-2xl ss-the-so delay-100">
+                        <img src="img/son-son/hh_thong_ke.webp" alt="">
+                        <small>Đơn hàng hoàn thành</small>
+                        <b id="statOrders">0 đơn</b>
                     </div>
-                    
-                    <!-- Card 3: Tables -->
-                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden delay-200">
-                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-chair"></i></div>
-                        <div class="space-y-2 relative z-10">
-                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Bàn đang sử dụng</span>
-                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statTables">0 bàn</h3>
-                        </div>
+                    <div class="glass-panel glass-card-hover rounded-2xl ss-the-so delay-200">
+                        <img src="img/son-son/hh_ban_an.webp" alt="">
+                        <small>Bàn đang sử dụng</small>
+                        <b id="statTables">0 bàn</b>
                     </div>
-                    
-                    <!-- Card 4: Staff -->
-                    <div class="glass-panel glass-card-hover p-6 rounded-2xl flex items-center justify-between relative overflow-hidden delay-300">
-                        <div class="absolute -right-4 -bottom-4 opacity-10 text-gold-400 text-7xl"><i class="fa-solid fa-users"></i></div>
-                        <div class="space-y-2 relative z-10">
-                            <span class="text-[11px] text-gray-400 uppercase tracking-widest font-semibold">Nhân sự hệ thống</span>
-                            <h3 class="text-2xl md:text-3xl font-bold text-white light:text-royal-900" id="statStaff">0 người</h3>
-                        </div>
+                    <div class="glass-panel glass-card-hover rounded-2xl ss-the-so delay-300">
+                        <img src="img/son-son/hh_nhan_vien.webp" alt="">
+                        <small>Nhân sự hệ thống</small>
+                        <b id="statStaff">0 người</b>
                     </div>
                 </div>
 
                 <!-- Chart -->
-                <div class="glass-panel p-6 rounded-2xl delay-300">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="text-lg font-serif font-bold text-gold-400">Biểu Đồ Doanh Thu Theo Ngày</h4>
+                <div class="glass-panel p-5 lg:p-6 rounded-2xl delay-300">
+                    <div class="flex justify-between items-center mb-5">
+                        <h4 class="ss-tieu-de text-lg font-bold">Biểu Đồ Doanh Thu Theo Ngày</h4>
                     </div>
                     <div class="h-[350px] w-full relative">
                         <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
-
             <!-- SECTION 2: MENU MANAGEMENT PAGE -->
             <div id="tab-menu-content" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 tab-content">
                 
@@ -704,12 +536,12 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/config.js?v=1.2"></script>
-    <script src="js/admin.js?v=3.9"></script>
-    <script src="js/music-player.js?v=2.0"></script>
+    <script src="js/admin.js?v=4.0"></script>
+    <script src="js/music-player.js?v=2.1"></script>
 
     <!-- Kiến trúc mới (ES module). Hiện quản lý màn hình Danh mục; các màn
          hình còn lại vẫn do js/admin.js đảm nhiệm. Xem js/app-admin.js. -->
-    <script type="module" src="js/app-admin.js?v=1.9"></script>
+    <script type="module" src="js/app-admin.js?v=2.0"></script>
     <script>
         // Mobile Sidebar Toggle
         const sidebar = document.getElementById('sidebar');

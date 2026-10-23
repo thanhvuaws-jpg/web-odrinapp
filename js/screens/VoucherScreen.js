@@ -52,10 +52,13 @@ export class VoucherScreen extends CrudScreen {
             {
                 ten: 'HANG_TOITHIEU', nhan: 'Hạng',
                 dinhDang: (v) => {
-                    const m = { dong: ['Đồng', '#CD7F32'], bac: ['Bạc', '#C0C0C0'], vang: ['Vàng', '#FFD700'],
-                                kimcuong: ['Kim cương', '#00BCD4'] };
-                    const [nhan, mau] = m[v] || [v, '#9E9E9E'];
-                    return `<span class="text-xs font-bold" style="color:${mau}">${Formatter.an(nhan)}</span>`;
+                    // Màu chữ đậm hơn màu kim loại thật để đọc được trên nền ngà;
+                    // huy hiệu hạng lấy từ bộ Sơn Son dùng chung với app.
+                    const m = { dong: ['Đồng', '#8A4B1C'], bac: ['Bạc', '#5E6670'], vang: ['Vàng', '#A8771F'],
+                                kimcuong: ['Kim cương', '#1F6F86'] };
+                    const [nhan, mau] = m[v] || [v, '#7A6553'];
+                    const anh = m[v] ? `<img src="img/son-son/rank_${v}.webp" alt="" class="w-6 h-6 flex-none">` : '';
+                    return `<span class="inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap" style="color:${mau}">${anh}${Formatter.an(nhan)}</span>`;
                 }
             },
             {

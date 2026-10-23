@@ -9,7 +9,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- FontAwesome 6 CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -21,24 +21,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=2.0">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
 </head>
 <body>
 
-    <!-- AMBIENT GLOW & GOLDEN DUST BACKGROUND -->
-    <div class="ambient-background">
-        <div class="glow-orb orb-1"></div>
-        <div class="glow-orb orb-2"></div>
-        <div class="glow-orb orb-3"></div>
-        <div id="goldParticles" class="particles-container"></div>
-    </div>
 
     <!-- NAVIGATION -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="#hero" class="nav-logo">
                 <div class="nav-logo-icon">
-                    <i class="fa-solid fa-crown"></i>
+                    <img src="/quantri/img/son-son/logo.webp" alt="">
                 </div>
                 <div class="nav-logo-text">
                     <h1>ROYAL</h1>
@@ -80,7 +73,7 @@
 
     <!-- HERO SECTION -->
     <header class="hero" id="hero">
-        <div class="hero-bg" style="background-image: url('images/hero.png');"></div>
+        <div class="hero-bg"></div>
         <div class="hero-overlay"></div>
         
         <div class="hero-content">
@@ -301,7 +294,9 @@
                         <i class="fa-solid fa-crown text-gold"></i> Đăng Ký Đặt Bàn
                     </h4>
                     
-                    <form id="bookingForm">
+                    <!-- novalidate: để máy chủ (dat_ban_khach.php) báo lỗi bằng hộp thoại
+                         cùng kiểu, thay cho bong bóng mặc định của trình duyệt -->
+                    <form id="bookingForm" novalidate>
                         <div class="form-group">
                             <label><i class="fa-solid fa-user"></i> Họ và Tên Khách Hàng *</label>
                             <input type="text" id="bookingName" placeholder="Nhập họ và tên..." required>
@@ -396,7 +391,7 @@
 
         <div class="footer-bottom">
             <p>© 2026 Royal Restaurant. All Rights Reserved. Powered by Royal POS Ecosystem.</p>
-            <p style="color: #D4AF37;"><i class="fa-solid fa-shield-halved"></i> Khóa Luận Tốt Nghiệp — Royal Restaurant POS</p>
+            <p><i class="fa-solid fa-shield-halved"></i> Khóa Luận Tốt Nghiệp — Royal Restaurant POS</p>
         </div>
     </footer>
 

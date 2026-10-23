@@ -1,21 +1,27 @@
 $(document).ready(function() {
-    // Theme Switcher Logic
-    let currentTheme = localStorage.getItem("theme") || "dark";
-    applyTheme(currentTheme);
+    // Giao diện Sơn Son chỉ có một bản sáng (xem js/son-son-mau.js); xóa lựa
+    // chọn sáng/tối còn sót từ bản cũ để trang quản trị không bị lệch màu.
+    localStorage.removeItem("theme");
 
-    $("#themeToggle").click(function() {
-        currentTheme = currentTheme === "dark" ? "light" : "dark";
-        localStorage.setItem("theme", currentTheme);
-        applyTheme(currentTheme);
-    });
-
-    function applyTheme(theme) {
-        if (theme === "light") {
-            $("html").removeClass("dark").addClass("light");
-        } else {
-            $("html").addClass("dark").removeClass("light");
-        }
+    // Ghi nhớ tên đăng nhập trên máy này — chỉ tên, không bao giờ lưu mật khẩu.
+    const KHOA_NHO_TEN = "tendn_ghi_nho";
+    const tenDaNho = localStorage.getItem(KHOA_NHO_TEN);
+    if (tenDaNho) {
+        $("#username").val(tenDaNho);
+        $("#nhoTenDangNhap").prop("checked", true);
     }
+
+    // Tài khoản nhân sự do quản lý cấp, nên quên mật khẩu thì nhờ quản lý
+    // đặt lại ở mục Nhân viên — không có đường tự khôi phục trên web.
+    $("#quenMatKhau").click(function(e) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'info',
+            title: 'Quên mật khẩu?',
+            text: 'Hãy nhờ quản lý nhà hàng đặt lại mật khẩu cho bạn ở mục Nhân viên trên trang quản trị.',
+            confirmButtonText: 'Đã hiểu'
+        });
+    });
 
     // Kiểm tra xem đã đăng nhập chưa
     const userRole = localStorage.getItem("maquyen");
@@ -43,13 +49,22 @@ $(document).ready(function() {
         const username = $("#username").val().trim();
         const password = $("#password").val().trim();
 
-        const isDark = $("html").hasClass("dark");
+        // Form đặt novalidate để không hiện bong bóng mặc định của trình
+        // duyệt; tự báo bằng hộp thoại cùng kiểu với phần còn lại.
+        if (!username || !password) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Thiếu thông tin',
+                text: !username ? 'Vui lòng nhập tên đăng nhập.' : 'Vui lòng nhập mật khẩu.',
+                confirmButtonText: 'Nhập lại'
+            }).then(() => $(!username ? "#username" : "#password").trigger("focus"));
+            return;
+        }
+
         Swal.fire({
             title: 'Đang xử lý...',
             html: 'Vui lòng chờ trong giây lát',
             allowOutsideClick: false,
-            background: isDark ? '#0f172a' : '#ffffff',
-            color: isDark ? '#f1f5f9' : '#0f172a',
             didOpen: () => {
                 Swal.showLoading();
             }
@@ -74,14 +89,17 @@ $(document).ready(function() {
                         localStorage.setItem("hoten", response.HOTENNV);
                         localStorage.setItem("maquyen", response.MAQUYEN);
                         localStorage.setItem("token", response.TOKEN);
+                        if ($("#nhoTenDangNhap").is(":checked")) {
+                            localStorage.setItem(KHOA_NHO_TEN, username);
+                        } else {
+                            localStorage.removeItem(KHOA_NHO_TEN);
+                        }
 
                         Swal.fire({
                             icon: 'success',
                             title: 'Thành công!',
                             text: 'Đăng nhập hệ thống thành công.',
                             timer: 1500,
-                            background: isDark ? '#0f172a' : '#ffffff',
-                            color: isDark ? '#f1f5f9' : '#0f172a',
                             showConfirmButton: false
                         }).then(() => {
                             redirectByRole(role);
@@ -91,8 +109,6 @@ $(document).ready(function() {
                             icon: 'error',
                             title: 'Từ chối truy cập!',
                             text: 'Tài khoản nhân viên phục vụ chỉ sử dụng trên App Android.',
-                            background: isDark ? '#0f172a' : '#ffffff',
-                            color: isDark ? '#f1f5f9' : '#0f172a',
                             confirmButtonText: 'Đã hiểu'
                         });
                     }
@@ -101,8 +117,6 @@ $(document).ready(function() {
                         icon: 'error',
                         title: 'Đăng nhập thất bại',
                         text: response.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.',
-                        background: isDark ? '#0f172a' : '#ffffff',
-                        color: isDark ? '#f1f5f9' : '#0f172a',
                         confirmButtonText: 'Thử lại'
                     });
                 }
@@ -113,8 +127,6 @@ $(document).ready(function() {
                     icon: 'error',
                     title: 'Lỗi kết nối',
                     text: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng hoặc VPS.',
-                    background: isDark ? '#0f172a' : '#ffffff',
-                    color: isDark ? '#f1f5f9' : '#0f172a',
                     confirmButtonText: 'Đóng'
                 });
             }

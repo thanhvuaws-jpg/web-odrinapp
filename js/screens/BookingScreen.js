@@ -41,7 +41,10 @@ export class BookingScreen extends CrudScreen {
         confirmed:  { nhan: 'Đã xác nhận',  mau: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
         checked_in: { nhan: 'Đã nhận bàn',  mau: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
         completed:  { nhan: 'Hoàn tất',     mau: 'bg-slate-500/15 text-slate-400 border-slate-500/30' },
-        cancelled:  { nhan: 'Đã hủy',       mau: 'bg-red-500/15 text-red-400 border-red-500/30' }
+        cancelled:  { nhan: 'Đã hủy',       mau: 'bg-red-500/15 text-red-400 border-red-500/30' },
+        // Máy chủ tự gắn khi khách trễ quá giờ giữ bàn (batch_update_booking_status.php);
+        // thiếu dòng này thì cột trạng thái hiện nguyên chữ "overdue".
+        overdue:    { nhan: 'Quá giờ hẹn',  mau: 'bg-orange-500/15 text-orange-400 border-orange-500/30' }
     };
 
     constructor() {

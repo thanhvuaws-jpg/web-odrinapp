@@ -1,0 +1,361 @@
+/*
+ * Giao diện Sơn Son cho web Royal — cùng bộ với app Android.
+ * Nền kem giấy dó, thẻ ngà viền vàng, thanh bên sơn son có sen chìm và sóng
+ * vàng, thanh đầu là tấm hoành, mục menu là huy hiệu.
+ *
+ * Đi cùng js/son-son-mau.js (bảng màu Tailwind đã đảo sang nền sáng). Tệp này
+ * lo phần bảng màu không làm được: nền trang, thẻ, ô nhập, bảng, nút, hộp
+ * thoại SweetAlert2 và các chỗ cần chữ sáng trên nền đặc.
+ *
+ * Mọi quy tắc bắt đầu bằng html.son-son để thắng class tiện ích của Tailwind
+ * và khối <style> riêng của từng trang mà không phải dùng !important (chỉ
+ * SweetAlert2 cần, vì nó ghi màu thẳng vào thuộc tính style).
+ */
+:root {
+    --son: #8E1B17; --son-sang: #B3261F; --son-dam: #5E0E0C; --then: #1F120D;
+    --vang: #D9A441; --vang-dam: #A8771F; --vang-sang: #FFE3A0;
+    --kem: #F7EEDD; --kem-dam: #EFE2CA; --nga: #FFFDF8; --muc: #2A1A14; --chu-mo: #7A6553;
+    --ngoc: #2E6B57; --ho-phach: #A86A12;
+    --vien: rgba(217, 164, 65, .55); --vien-nhe: rgba(168, 119, 31, .22);
+    --bong: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 6px 18px -10px rgba(94, 14, 12, .35);
+    --f-tieu-de: "Baloo 2", "Segoe UI", system-ui, sans-serif;
+    --f-chu: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+    color-scheme: light;
+}
+
+/* ── Nền và chữ ───────────────────────────────────────────── */
+html.son-son body {
+    background: radial-gradient(circle at 85% 0%, #FFF6E2 0, transparent 45%), var(--kem);
+    background-attachment: fixed;
+    color: var(--muc);
+    font-family: var(--f-chu);
+}
+html.son-son h1, html.son-son h2, html.son-son h3, html.son-son h4,
+html.son-son .font-serif { font-family: var(--f-tieu-de); letter-spacing: 0; }
+html.son-son h1, html.son-son h2, html.son-son h3 { text-wrap: balance; }
+html.son-son ::selection { background: var(--vang-sang); color: var(--son-dam); }
+html.son-son :focus-visible { outline: 2px solid var(--vang); outline-offset: 2px; }
+
+/* Lớp nền cũ của giao diện tối (ảnh Unsplash, quầng sáng, bụi vàng) */
+html.son-son .bg-overlay,
+html.son-son .ambient-background,
+html.son-son .bg-orb { display: none; }
+
+html.son-son ::-webkit-scrollbar { width: 8px; height: 8px; }
+html.son-son ::-webkit-scrollbar-track { background: transparent; }
+html.son-son ::-webkit-scrollbar-thumb { background: rgba(168, 119, 31, .35); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+html.son-son ::-webkit-scrollbar-thumb:hover { background: rgba(168, 119, 31, .6); background-clip: padding-box; }
+
+/* ── Thẻ ngà ─────────────────────────────────────────────── */
+html.son-son .glass-panel {
+    background: var(--nga);
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    border: 1px solid var(--vien);
+    box-shadow: var(--bong);
+}
+html.son-son .glass-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: var(--vang-dam);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 12px 24px -14px rgba(94, 14, 12, .45);
+}
+html.son-son .glass-button {
+    background: var(--nga); border: 1px solid var(--vien); color: var(--son);
+}
+html.son-son .glass-button:hover {
+    background: #FFF4DA; border-color: var(--vang-dam); transform: translateY(-1px);
+    box-shadow: 0 6px 14px -10px rgba(94, 14, 12, .5);
+}
+
+/* ── Viền vàng (bảng màu đổi gold sang son cho chữ, viền thì phải là vàng) ── */
+html.son-son [class~="border-gold-400"], html.son-son [class~="border-gold"],
+html.son-son [class~="border-gold-400/60"], html.son-son [class~="border-gold-400/50"],
+html.son-son [class~="border-gold-400/40"], html.son-son [class~="border-royal-gold/50"] { border-color: var(--vang); }
+html.son-son [class~="border-gold-400/30"], html.son-son [class~="border-gold-400/25"],
+html.son-son [class~="border-gold-400/20"], html.son-son [class~="border-royal-gold/30"] { border-color: var(--vien); }
+html.son-son [class~="border-gold-400/10"], html.son-son [class~="border-gold-400/5"] { border-color: var(--vien-nhe); }
+html.son-son [class~="divide-gold-400/5"] > :not([hidden]) ~ :not([hidden]) { border-color: var(--vien-nhe); }
+html.son-son [class~="focus:border-gold-400"]:focus,
+html.son-son [class*="hover:border-gold-400"]:hover { border-color: var(--vang-dam); }
+
+/* Nền nhấn nhạt: son pha loãng thành hồng, nên đổi sang vàng nhạt như app */
+html.son-son [class~="bg-gold-400/10"], html.son-son [class~="bg-gold-400/15"],
+html.son-son [class~="bg-royal-gold/10"], html.son-son [class~="bg-royal-gold/15"] { background-color: rgba(217, 164, 65, .16); }
+html.son-son [class~="bg-gold-400/20"], html.son-son [class~="bg-royal-gold/20"],
+html.son-son [class~="bg-royal-gold/25"] { background-color: rgba(217, 164, 65, .26); }
+html.son-son [class~="hover:bg-gold-400/10"]:hover, html.son-son [class~="hover:bg-royal-gold/25"]:hover { background-color: rgba(217, 164, 65, .22); }
+
+/* Quầng sáng vàng của giao diện tối không hợp nền sáng */
+html.son-son [class*="shadow-[0_0_"] { box-shadow: 0 6px 16px -10px rgba(94, 14, 12, .45); }
+html.son-son .drop-shadow-md, html.son-son .drop-shadow-lg { filter: none; }
+
+/* ── Chữ sáng trên nền đặc ───────────────────────────────── */
+html.son-son :is(.bg-red-500, .bg-red-600, .bg-orange-500, .bg-amber-500, .bg-green-500,
+                 .bg-emerald-500, .bg-emerald-600, .bg-blue-500, .bg-blue-600, .bg-purple-600,
+                 .bg-gold-400, .bg-son, [class*="from-blue-"], [class*="from-emerald-"],
+                 [class*="from-red-"], [class*="from-purple-"]):is(.text-white),
+html.son-son :is(.bg-red-500, .bg-red-600, .bg-orange-500, .bg-emerald-600, .bg-blue-600,
+                 [class*="from-blue-"], [class*="from-emerald-"], [class*="from-red-"]) .text-white { color: var(--nga); }
+html.son-son [class~="hover:text-white"]:is([class~="hover:bg-red-500"], [class~="hover:bg-red-600"],
+                 [class~="hover:bg-gray-600"], [class~="hover:bg-gold-400"]):hover { color: var(--nga); }
+html.son-son [class~="hover:bg-gray-600"]:hover { background-color: var(--chu-mo); }
+
+/* Huy hiệu đếm (chat, kho, thông báo) */
+html.son-son #navChatHuyHieu, html.son-son #navKhoHuyHieu, html.son-son #notifBadge {
+    background: var(--vang); color: var(--son-dam); border-color: var(--son-dam);
+}
+html.son-son #navKhoHuyHieu.bg-red-600 { background: var(--vang-sang); color: var(--son-sang); }
+
+/* ── Nút ──────────────────────────────────────────────────── */
+html.son-son .ss-nut,
+html.son-son button[class*="from-gold-500"], html.son-son a[class*="from-gold-500"],
+html.son-son button[class~="bg-gold-400"], html.son-son a[class~="bg-gold-400"],
+html.son-son .swal2-styled.swal2-confirm {
+    color: var(--vang-sang);
+    background: linear-gradient(180deg, var(--son-sang), var(--son) 55%, var(--son-dam));
+    border: 1px solid var(--son-dam); border-bottom-width: 3px;
+    box-shadow: inset 0 1px 0 rgba(255, 227, 160, .45);
+}
+html.son-son .ss-nut:hover,
+html.son-son button[class*="from-gold-500"]:hover, html.son-son a[class*="from-gold-500"]:hover,
+html.son-son button[class~="bg-gold-400"]:hover, html.son-son a[class~="bg-gold-400"]:hover {
+    filter: brightness(1.07);
+    box-shadow: inset 0 1px 0 rgba(255, 227, 160, .45), 0 8px 16px -10px rgba(94, 14, 12, .6);
+}
+html.son-son .ss-nut:active,
+html.son-son button[class*="from-gold-500"]:active, html.son-son button[class~="bg-gold-400"]:active { transform: translateY(1px); }
+html.son-son .ss-nut-vang {
+    color: var(--son-dam);
+    background: linear-gradient(180deg, #FFEFC4, var(--vang-sang) 30%, var(--vang) 75%, var(--vang-dam));
+    border: 1px solid var(--vang-dam); border-bottom-width: 3px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7);
+}
+html.son-son .ss-nut-vang:hover { filter: brightness(1.04); }
+/* Nút viền nhạt dạng "bg-gold-400/10 ... hover:bg-gold-400" */
+html.son-son button[class~="hover:bg-gold-400"]:hover, html.son-son a[class~="hover:bg-gold-400"]:hover {
+    background: linear-gradient(180deg, var(--son-sang), var(--son));
+    color: var(--vang-sang); border-color: var(--son-dam);
+}
+html.son-son [class~="bg-gold-300"], html.son-son [class~="hover:bg-gold-300"]:hover { background-color: var(--son-sang); color: var(--vang-sang); }
+
+/* Công tắc kiểu Tailwind (peer + after:) — nút tròn trắng thành vàng */
+html.son-son [class*="after:bg-white"]::after {
+    background: linear-gradient(180deg, var(--vang-sang), var(--vang));
+    border-color: var(--vang-dam);
+}
+html.son-son [class*="peer-checked:bg-"] { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); }
+
+/* ── Ô nhập ───────────────────────────────────────────────── */
+html.son-son input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not(.ss-tran),
+html.son-son select, html.son-son textarea {
+    background-color: var(--nga);
+    border: 1.5px solid var(--vien);
+    color: var(--muc);
+    border-radius: 12px;
+}
+html.son-son input:not([type="checkbox"]):not([type="radio"]):not(.ss-tran):focus,
+html.son-son select:focus, html.son-son textarea:focus {
+    outline: none;
+    border-color: var(--vang-dam);
+    box-shadow: 0 0 0 3px rgba(217, 164, 65, .22);
+}
+html.son-son input::placeholder, html.son-son textarea::placeholder { color: #A8937C; opacity: 1; }
+html.son-son input[type="checkbox"], html.son-son input[type="radio"] { accent-color: var(--son); }
+html.son-son input:disabled, html.son-son select:disabled, html.son-son textarea:disabled { background-color: var(--kem); color: var(--chu-mo); }
+html.son-son select option { background: var(--nga); color: var(--muc); }
+html.son-son label { color: var(--chu-mo); }
+html.son-son input[type="file"] { font-size: 13px; color: var(--chu-mo); }
+html.son-son input[type="file"]::file-selector-button {
+    font: 600 13px var(--f-chu); color: var(--son); cursor: pointer;
+    background: var(--kem); border: 1.5px solid var(--vien); border-radius: 10px;
+    padding: 6px 12px; margin-right: 10px;
+}
+html.son-son input[type="file"]::file-selector-button:hover { background: #FFF4DA; border-color: var(--vang-dam); }
+
+/* ── Bảng ─────────────────────────────────────────────────── */
+html.son-son table thead th {
+    color: var(--son-dam);
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    background: var(--kem-dam);
+    border-bottom: 1px solid var(--vien);
+}
+html.son-son table thead tr { background: transparent; border-color: var(--vien); }
+html.son-son table thead th:first-child { border-top-left-radius: 10px; }
+html.son-son table thead th:last-child { border-top-right-radius: 10px; }
+html.son-son table thead[class*="bg-"] { background: transparent; backdrop-filter: none; }
+html.son-son table tbody tr { border-color: var(--vien-nhe); }
+html.son-son table tbody > tr > td { border-color: var(--vien-nhe); }
+html.son-son table tbody tr:hover { background: #FFF6E4; }
+html.son-son tbody[class*="divide-"] > :not([hidden]) ~ :not([hidden]) { border-color: var(--vien-nhe); }
+
+/* ── Chữ gradient vàng của thu ngân → son ─────────────────── */
+html.son-son .text-gradient-gold {
+    background: linear-gradient(90deg, var(--son-sang), var(--son-dam));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ── Tiêu đề mục kiểu app: ô thoi vàng phía trước ─────────── */
+html.son-son .ss-tieu-de { display: flex; align-items: center; gap: 10px; color: var(--son-dam); font-family: var(--f-tieu-de); }
+html.son-son .ss-tieu-de::before {
+    content: ""; width: 9px; height: 9px; flex: none; background: var(--vang);
+    transform: rotate(45deg); box-shadow: 0 0 0 2px rgba(217, 164, 65, .25);
+}
+
+/* ═══════════ KHUNG QUẢN TRỊ ═══════════ */
+
+/* Thanh bên sơn son */
+html.son-son .ss-ben {
+    color: var(--kem);
+    background: linear-gradient(180deg, #6B1210, var(--son-dam) 40%, #3E0908);
+    border-right: 1.5px solid var(--vang-dam);
+    overflow: hidden;
+}
+html.son-son .ss-ben::before { /* sen chìm */
+    content: ""; position: absolute; left: -40px; right: -40px; bottom: 30px; height: 230px;
+    background: url(../img/son-son/sen_chim.webp) center bottom / contain no-repeat;
+    opacity: .16; pointer-events: none;
+}
+html.son-son .ss-ben::after { /* dải sóng vàng lấp đáy */
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 32px;
+    background: url(../img/son-son/song_vang.webp) left bottom / auto 32px repeat-x;
+    opacity: .9; pointer-events: none;
+}
+html.son-son .ss-ben-dau {
+    position: relative; padding: 18px 18px 16px;
+    background: linear-gradient(90deg, rgba(62, 9, 8, .82), rgba(62, 9, 8, .35)), url(../img/son-son/hoanh.jpg) 72% 40% / cover;
+    border-bottom: 1.5px solid var(--vang);
+}
+html.son-son .ss-logo { display: flex; align-items: center; gap: 10px; }
+html.son-son .ss-logo img { width: 46px; height: 46px; flex: none; }
+html.son-son .ss-logo b { display: block; font: 800 21px/1 var(--f-tieu-de); color: var(--vang-sang); letter-spacing: .04em; }
+html.son-son .ss-logo small { color: var(--kem); opacity: .85; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+html.son-son .ss-nguoi { display: flex; align-items: center; gap: 10px; margin-top: 14px; min-width: 0; }
+html.son-son .ss-viet-tat {
+    width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none;
+    font: 800 14px var(--f-tieu-de); color: var(--son-dam);
+    background: radial-gradient(circle at 35% 30%, #FFF3D1, var(--vang) 70%, var(--vang-dam));
+    border: 1.5px solid #FFE9B5;
+}
+html.son-son .ss-nguoi b { display: block; font-weight: 700; color: var(--nga); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.son-son .ss-nguoi small { color: var(--vang-sang); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+html.son-son .ss-nguoi small i { width: 7px; height: 7px; border-radius: 50%; background: #7FD1A8; box-shadow: 0 0 0 2px rgba(127, 209, 168, .25); }
+html.son-son .ss-menu { position: relative; z-index: 1; padding: 10px 12px 12px; display: grid; gap: 3px; align-content: start; overflow-y: auto; }
+html.son-son .ss-nhom { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--vang); opacity: .85; padding: 10px 10px 4px; }
+html.son-son .ss-ben .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 12px;
+    color: var(--kem); font-weight: 500; font-size: 14px; border: 0;
+    transition: background .15s ease, color .15s ease;
+}
+html.son-son .ss-ben .nav-item:hover { background: rgba(255, 227, 160, .1); color: var(--nga); }
+html.son-son .ss-ben .nav-item img { width: 34px; height: 34px; flex: none; }
+html.son-son .ss-ben .nav-item .hh-bat { display: none; }
+html.son-son .ss-ben .nav-item.nav-item-active {
+    background: linear-gradient(90deg, rgba(255, 227, 160, .22), rgba(255, 227, 160, .06));
+    color: var(--vang-sang) !important; font-weight: 700; border: 0;
+    box-shadow: inset 0 0 0 1px rgba(255, 227, 160, .35);
+}
+html.son-son .ss-ben .nav-item.nav-item-active .hh-bat { display: block; }
+html.son-son .ss-ben .nav-item.nav-item-active .hh-tat { display: none; }
+html.son-son .ss-ben .nav-item > span:not([id]) { min-width: 0; }
+html.son-son .ss-ben-cuoi { position: relative; z-index: 1; margin-top: auto; padding: 6px 12px 44px; }
+html.son-son .ss-ben-cuoi .nav-item { width: 100%; background: none; cursor: pointer; text-align: left; }
+html.son-son .ss-ben-cuoi .nav-item:hover { background: rgba(255, 227, 160, .1); }
+
+/* Thanh đầu là tấm hoành */
+html.son-son .ss-dau {
+    background: linear-gradient(90deg, rgba(62, 9, 8, .92) 0%, rgba(94, 14, 12, .74) 45%, rgba(94, 14, 12, 0) 78%),
+                url(../img/son-son/hoanh.jpg) right 0 top 44% / 1200px auto no-repeat, var(--son-dam);
+    border-bottom: 1.5px solid var(--vang);
+    color: var(--kem);
+}
+html.son-son .ss-dau #pageTitle { color: var(--vang-sang); font-family: var(--f-tieu-de); font-weight: 800; letter-spacing: 0; }
+html.son-son .ss-dau #pageSubtitle { color: var(--kem); opacity: .85; letter-spacing: .02em; text-transform: none; }
+/* Không đặt display ở đây: nút menu và đồng hồ dựa vào lg:hidden / md:inline-flex */
+html.son-son .ss-chip {
+    align-items: center; justify-content: center; gap: 8px;
+    background: rgba(31, 18, 13, .55); border: 1px solid rgba(255, 227, 160, .45);
+    color: var(--vang-sang); border-radius: 999px; font-weight: 600;
+}
+html.son-son .ss-chip:hover { background: rgba(31, 18, 13, .75); }
+html.son-son #liveTime.ss-chip { padding: 6px 14px; font-size: 14px; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+
+/* Bảng thông báo thả xuống */
+html.son-son #notifPanel { border: 1px solid var(--vien) !important; box-shadow: 0 18px 40px -18px rgba(31, 18, 13, .55); }
+html.son-son #notifPanel .notif-item:hover { background: #FFF6E4; }
+
+/* Thẻ số liệu tổng quan */
+html.son-son .ss-the-so { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; align-items: center; padding: 16px 18px; }
+html.son-son .ss-the-so img { grid-row: span 2; width: 52px; height: 52px; }
+html.son-son .ss-the-so small { font-size: 13px; font-weight: 600; color: var(--chu-mo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.son-son .ss-the-so b { font: 800 clamp(19px, 1.55vw, 26px)/1.1 var(--f-tieu-de); white-space: nowrap; color: var(--son-dam); font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+
+/* Toast đặt bàn mới */
+html.son-son .toast-notif {
+    background: var(--then) !important; color: var(--kem) !important;
+    border: 1px solid var(--vien) !important; backdrop-filter: none !important;
+}
+html.son-son .toast-notif .text-white, html.son-son .toast-notif p:first-child { color: var(--vang-sang); }
+html.son-son .toast-notif .text-blue-300 { color: var(--nga); }
+html.son-son .toast-notif .text-gray-400 { color: #D7C6AC; }
+html.son-son .toast-notif .bg-blue-500\/20 { background: rgba(217, 164, 65, .22); }
+html.son-son .toast-notif .text-blue-400 { color: var(--vang); }
+
+/* ═══════════ SWEETALERT2 ═══════════ */
+html.son-son .swal2-container.swal2-backdrop-show { background: rgba(31, 18, 13, .5); }
+html.son-son .swal2-popup:not(.swal2-toast) {
+    background: var(--nga) !important; color: var(--muc) !important;
+    border: 1px solid var(--vien) !important; border-radius: 18px !important;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .8) inset, 0 30px 60px -28px rgba(31, 18, 13, .6) !important;
+    font-family: var(--f-chu);
+    position: relative; overflow: hidden;
+}
+html.son-son .swal2-popup:not(.swal2-toast)::before { /* nẹp sóng vàng mép trên như tấm hoành */
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px;
+    background: linear-gradient(90deg, var(--son-dam), var(--son), var(--son-dam));
+    border-bottom: 1.5px solid var(--vang);
+}
+html.son-son .swal2-title { color: var(--son-dam) !important; font-family: var(--f-tieu-de); font-weight: 800; }
+html.son-son .swal2-html-container { color: var(--muc) !important; }
+html.son-son .swal2-styled { border-radius: 12px !important; font-weight: 700 !important; font-family: var(--f-chu); padding: 10px 20px !important; }
+html.son-son .swal2-styled.swal2-confirm { background: linear-gradient(180deg, var(--son-sang), var(--son) 55%, var(--son-dam)) !important; color: var(--vang-sang) !important; }
+html.son-son .swal2-styled.swal2-deny {
+    background: linear-gradient(180deg, #FFEFC4, var(--vang-sang) 30%, var(--vang) 75%, var(--vang-dam)) !important;
+    color: var(--son-dam) !important; border: 1px solid var(--vang-dam); border-bottom-width: 3px;
+}
+html.son-son .swal2-styled.swal2-cancel {
+    background: var(--nga) !important; color: var(--son) !important;
+    border: 1.5px solid var(--vien) !important;
+}
+html.son-son .swal2-styled:focus, html.son-son .swal2-styled:focus-visible { box-shadow: 0 0 0 3px rgba(217, 164, 65, .35) !important; }
+html.son-son .swal2-close { color: var(--chu-mo); }
+html.son-son .swal2-close:hover { color: var(--son); }
+html.son-son .swal2-input, html.son-son .swal2-textarea, html.son-son .swal2-select, html.son-son .swal2-file {
+    background: var(--nga) !important; color: var(--muc) !important;
+    border: 1.5px solid var(--vien) !important; border-radius: 12px !important; box-shadow: none !important;
+}
+html.son-son .swal2-input:focus, html.son-son .swal2-textarea:focus, html.son-son .swal2-select:focus {
+    border-color: var(--vang-dam) !important; box-shadow: 0 0 0 3px rgba(217, 164, 65, .22) !important;
+}
+html.son-son .swal2-input-label { color: var(--chu-mo); }
+html.son-son .swal2-validation-message { background: #F7E0DC !important; color: var(--son) !important; border-radius: 10px; }
+html.son-son .swal2-validation-message::before { background-color: var(--son) !important; }
+html.son-son .swal2-timer-progress-bar { background: var(--vang); }
+html.son-son .swal2-loader { border-color: var(--son) transparent var(--son) transparent; }
+/* Biểu tượng: thành công ngọc, lỗi son, cảnh báo hổ phách, hỏi/thông tin vàng đậm */
+html.son-son .swal2-icon.swal2-success { border-color: var(--ngoc) !important; color: var(--ngoc) !important; }
+html.son-son .swal2-icon.swal2-success [class^="swal2-success-line"] { background-color: var(--ngoc) !important; }
+html.son-son .swal2-icon.swal2-success .swal2-success-ring { border-color: rgba(46, 107, 87, .3) !important; }
+html.son-son .swal2-icon.swal2-success [class^="swal2-success-circular-line"],
+html.son-son .swal2-icon.swal2-success .swal2-success-fix { background-color: var(--nga) !important; }
+html.son-son .swal2-icon.swal2-error { border-color: var(--son-sang) !important; color: var(--son-sang) !important; }
+html.son-son .swal2-icon.swal2-error [class^="swal2-x-mark-line"] { background-color: var(--son-sang) !important; }
+html.son-son .swal2-icon.swal2-warning { border-color: var(--ho-phach) !important; color: var(--ho-phach) !important; }
+html.son-son .swal2-icon.swal2-question, html.son-son .swal2-icon.swal2-info { border-color: var(--vang-dam) !important; color: var(--vang-dam) !important; }
+/* Bảng nằm trong hộp thoại (kiểm kê, lịch sử...) */
+html.son-son .swal2-html-container table thead th { position: static; }
+
+/* ── Chuyển động: chỉ khi người dùng không tắt ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+    html.son-son .tab-content { animation: none; }
+    html.son-son .glass-card-hover:hover { transform: none; }
+}

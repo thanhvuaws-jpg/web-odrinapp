@@ -1,360 +1,143 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<!-- Class "dark" giữ lại có chủ ý: xem chú thích trong js/son-son-mau.js -->
+<html lang="vi" class="dark son-son">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng Nhập | Royal Restaurant</title>
-    
-    <!-- Google Fonts -->
+
+    <!-- Google Fonts: Baloo 2 cho tiêu đề, Be Vietnam Pro cho chữ — cùng bộ với app -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Playfair Display cho Tiêu đề sang trọng, Plus Jakarta Sans cho text dễ đọc -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/son-son-mau.js?v=1"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        serif: ['"Playfair Display"', 'serif'],
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                    },
-                    colors: {
-                        gold: {
-                            300: '#F3E5AB',
-                            400: '#D4AF37',
-                            500: '#C5A017',
-                            600: '#AA8811',
-                        },
-                        royal: {
-                            900: '#0a0a0a',
-                            800: '#1a1a1a',
-                        }
-                    },
+                    fontFamily: SON_SON_FONT,
+                    colors: SON_SON_MAU,
                     animation: {
-                        'ken-burns': 'kenBurns 20s ease-in-out infinite alternate',
-                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
-                        'float': 'float 6s ease-in-out infinite',
-                        'shine': 'shine 3s linear infinite',
+                        'fade-in-up': 'fadeInUp 0.7s ease-out forwards',
                     },
                     keyframes: {
-                        kenBurns: {
-                            '0%': { transform: 'scale(1) translate(0, 0)' },
-                            '100%': { transform: 'scale(1.1) translate(-1%, -1%)' }
-                        },
                         fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '0%': { opacity: '0', transform: 'translateY(16px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' }
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' }
-                        },
-                        shine: {
-                            '0%': { backgroundPosition: '200% center' },
-                            '100%': { backgroundPosition: '-200% center' }
                         }
                     }
                 }
             }
         }
     </script>
-    
+
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/son-son.css?v=1">
 
     <style>
-        /* Hình nền nhà hàng sang trọng */
-        .bg-restaurant {
-            background-image: url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
+        /* Nửa trái: tấm hoành sơn son thếp vàng, sóng vàng chạy dọc mép dưới */
+        .dn-trai {
+            background: linear-gradient(90deg, rgba(31, 18, 13, .82) 0%, rgba(31, 18, 13, .55) 38%, rgba(31, 18, 13, .05) 70%),
+                        url(img/son-son/hoanh.jpg) 85% center / cover, var(--son-dam);
         }
-
-        /* Overlay tối màu để text nổi bật */
-        .overlay {
-            background: linear-gradient(135deg, rgba(10, 10, 10, 0.85) 0%, rgba(26, 26, 26, 0.6) 100%);
-        }
-        
-        /* Chế độ sáng (ít dùng cho phong cách luxury nhưng vẫn hỗ trợ) */
-        .light .overlay {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 240, 240, 0.5) 100%);
-        }
-
-        /* Hiệu ứng kính mờ (Glassmorphism) cực mượt */
-        .glass-luxury {
-            background: rgba(20, 20, 20, 0.4);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(212, 175, 55, 0.3); /* Viền màu vàng gold mờ */
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        .light .glass-luxury {
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-        }
-
-        /* Input styling */
-        .input-luxury {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .light .input-luxury {
-            background: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .input-luxury:focus {
-            background: rgba(0, 0, 0, 0.4);
-            border-color: #D4AF37; /* Màu gold */
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
-        }
-        
-        .light .input-luxury:focus {
-            background: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Nút button lấp lánh */
-        .btn-gold-shine {
-            background: linear-gradient(
-                90deg, 
-                #AA8811 0%, 
-                #D4AF37 25%, 
-                #F3E5AB 50%, 
-                #D4AF37 75%, 
-                #AA8811 100%
-            );
-            background-size: 200% auto;
-            color: #1a1a1a;
-            border: none;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .btn-gold-shine:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
-        }
-
-        /* Staggered animation delays cho các phần tử */
-        .delay-100 { animation-delay: 100ms; }
-        .delay-200 { animation-delay: 200ms; }
-        .delay-300 { animation-delay: 300ms; }
-        .delay-400 { animation-delay: 400ms; }
-        
-        /* --- Ambient Background Effects --- */
-        .ambient-background {
-            position: fixed; inset: 0; z-index: 0;
-            pointer-events: none; overflow: hidden;
-        }
-        .glow-orb {
-            position: absolute; border-radius: 50%;
-            filter: blur(130px); opacity: 0.35;
-            animation: orbFloat 22s ease-in-out infinite alternate;
-        }
-        .orb-1 {
-            width: 600px; height: 600px; top: -100px; left: -100px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.45) 0%, rgba(170, 136, 17, 0.15) 60%, transparent 100%);
-            animation-duration: 22s;
-        }
-        .orb-2 {
-            width: 500px; height: 500px; top: 40%; right: -150px;
-            background: radial-gradient(circle, rgba(243, 229, 171, 0.35) 0%, rgba(168, 85, 247, 0.15) 70%, transparent 100%);
-            animation-duration: 18s; animation-delay: -6s;
-        }
-        .orb-3 {
-            width: 700px; height: 700px; bottom: -200px; left: 20%;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(220, 38, 38, 0.15) 65%, transparent 100%);
-            animation-duration: 26s; animation-delay: -12s;
-        }
-        @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(60px, 80px) scale(1.15); }
-            100% { transform: translate(-40px, 40px) scale(0.92); }
-        }
-        
-        /* Hiệu ứng hạt bụi (particles) nâng cấp */
-        .particles {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            overflow: hidden;
+        .dn-trai::after {
+            content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 36px;
+            background: url(img/son-son/song_vang.webp) left bottom / auto 36px repeat-x;
             pointer-events: none;
-            z-index: 1;
         }
-        
-        .particle {
-            position: absolute;
-            background: radial-gradient(circle, #ffffff 0%, #F3E5AB 40%, #D4AF37 80%, transparent 100%);
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.8), 0 0 20px rgba(243, 229, 171, 0.5);
-            animation: floatUp linear infinite;
+        /* Nửa phải: giấy dó kem, sen chìm mờ ở góc */
+        .dn-phai {
+            background: radial-gradient(circle at 70% 20%, #FFF6E2, var(--kem) 60%);
         }
-        
-        @keyframes floatUp {
-            0% { transform: translateY(105vh) scale(0.2) rotate(0deg); opacity: 0; }
-            20% { opacity: 0.85; }
-            80% { opacity: 0.7; }
-            100% { transform: translateY(-10vh) scale(1.3) rotate(360deg); opacity: 0; }
+        .dn-phai::before {
+            content: ""; position: absolute; right: -80px; bottom: -40px; width: 420px; height: 300px;
+            background: url(img/son-son/sen_chim.webp) center / contain no-repeat;
+            opacity: .07; pointer-events: none;
         }
+        /* Chuyển động vào trang — tắt khi người dùng chọn giảm chuyển động */
+        .vao { opacity: 0; animation: fadeInUp .7s ease-out forwards; }
+        .tre-1 { animation-delay: 80ms; } .tre-2 { animation-delay: 160ms; } .tre-3 { animation-delay: 240ms; }
+        @keyframes fadeInUp {
+            0%   { opacity: 0; transform: translateY(16px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) { .vao { opacity: 1; animation: none; } }
     </style>
 </head>
+<body class="font-sans antialiased text-white min-h-screen">
 
-<body class="font-sans antialiased text-white min-h-screen relative overflow-hidden transition-colors duration-500">
-    
-    <!-- Background Image with Ken Burns Effect -->
-    <div class="absolute inset-0 z-0 bg-restaurant animate-ken-burns"></div>
-    
-    <!-- Gradient Overlay -->
-    <div class="absolute inset-0 z-0 overlay transition-colors duration-500"></div>
+    <div class="min-h-screen grid lg:grid-cols-[1.1fr_1fr]">
 
-    <!-- AMBIENT GLOW BACKGROUND -->
-    <div class="ambient-background">
-        <div class="glow-orb orb-1"></div>
-        <div class="glow-orb orb-2"></div>
-        <div class="glow-orb orb-3"></div>
-    </div>
-    
-    <!-- Particles Effect -->
-    <div class="particles" id="particles">
-        <!-- Javascript sẽ tạo các hạt bụi ở đây -->
-    </div>
+        <!-- Tấm hoành -->
+        <section class="dn-trai relative overflow-hidden flex flex-col justify-center px-8 py-14 sm:px-14 min-h-[280px] lg:min-h-screen">
+            <img src="img/son-son/logo.webp" alt="Logo Royal" class="w-20 h-20 sm:w-24 sm:h-24 vao">
+            <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold text-vang-sang leading-tight vao tre-1">Royal Restaurant</h1>
+            <p class="mt-2 text-base sm:text-lg max-w-[30ch] text-kem vao tre-2">Đẳng cấp hương vị hoàng gia. Trang dành cho quản lý và thu ngân.</p>
+        </section>
 
-    <!-- Theme Switcher floating top-right -->
-    <div class="absolute top-6 right-6 z-20">
-        <button id="themeToggle" class="w-10 h-10 rounded-full glass-luxury flex items-center justify-center hover:scale-110 transition-transform duration-300 group">
-            <i class="fa-solid fa-moon text-gold-400 text-sm dark:hidden group-hover:rotate-12 transition-transform"></i>
-            <i class="fa-solid fa-sun text-gold-400 text-sm hidden dark:block group-hover:rotate-90 transition-transform"></i>
-        </button>
-    </div>
+        <!-- Thẻ đăng nhập -->
+        <section class="dn-phai relative overflow-hidden grid place-items-center px-4 py-10 sm:px-10">
+            <div class="glass-panel relative w-full max-w-[420px] rounded-2xl px-6 py-8 sm:px-9 sm:pt-9 sm:pb-7 vao tre-1">
+                <h2 class="text-[34px] font-extrabold text-son-dam leading-none">Đăng nhập</h2>
+                <p class="mt-2 mb-6 text-chu-mo">Chào mừng bạn quay trở lại!</p>
 
-    <!-- Main Content Container -->
-    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
-        
-        <!-- Glassmorphism Card -->
-        <div class="w-full max-w-md glass-luxury rounded-3xl p-8 sm:p-10 relative overflow-hidden">
-            
-            <!-- Trang trí góc thẻ -->
-            <div class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-gold-400/30 rounded-tl-3xl m-2"></div>
-            <div class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-gold-400/30 rounded-br-3xl m-2"></div>
-
-            <!-- Header / Logo -->
-            <div class="text-center mb-10 opacity-0 animate-fade-in-up">
-                <!-- Vòng sáng phía sau logo -->
-                <div class="relative inline-block mb-4 animate-float">
-                    <div class="absolute inset-0 bg-gold-400 blur-xl opacity-30 rounded-full"></div>
-                    <div class="relative w-20 h-20 rounded-full border-2 border-gold-400 flex items-center justify-center bg-royal-900/50 backdrop-blur-sm">
-                        <i class="fa-solid fa-utensils text-3xl text-gold-400"></i>
+                <form id="loginForm" class="space-y-4" novalidate>
+                    <div class="space-y-1.5">
+                        <label for="username" class="block text-xs font-semibold tracking-wide">Tên đăng nhập</label>
+                        <div class="relative">
+                            <i class="fa-regular fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-chu-mo text-sm pointer-events-none"></i>
+                            <input type="text" id="username" required autocomplete="username"
+                                   class="w-full h-[46px] pl-10 pr-4 text-sm"
+                                   placeholder="Nhập tên đăng nhập">
+                        </div>
                     </div>
-                </div>
-                
-                <h1 class="font-serif text-3xl sm:text-4xl font-bold tracking-wider mb-2 text-white dark:text-white light:text-royal-900">
-                    ROYAL
-                    <span class="block text-gold-400 text-2xl sm:text-3xl mt-1 font-normal italic">Restaurant</span>
-                </h1>
-                <div class="w-12 h-0.5 bg-gold-400 mx-auto my-4 opacity-50"></div>
-                <p class="text-gray-300 dark:text-gray-300 light:text-gray-600 text-sm font-medium tracking-wide uppercase text-xs">
-                    Staff Portal
-                </p>
-            </div>
 
-            <!-- Form -->
-            <form id="loginForm" class="space-y-6">
-                <!-- Username Input -->
-                <div class="space-y-2 opacity-0 animate-fade-in-up delay-100">
-                    <label for="username" class="block text-xs font-semibold tracking-wider text-gray-300 uppercase">Tên đăng nhập</label>
-                    <div class="relative group">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gold-400/70 group-focus-within:text-gold-400 transition-colors">
-                            <i class="fa-regular fa-user"></i>
-                        </span>
-                        <input type="text" id="username" required
-                               class="w-full input-luxury rounded-xl py-3.5 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-0 text-sm"
-                               placeholder="Nhập tên đăng nhập...">
+                    <div class="space-y-1.5">
+                        <label for="password" class="block text-xs font-semibold tracking-wide">Mật khẩu</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-chu-mo text-sm pointer-events-none"></i>
+                            <input type="password" id="password" required autocomplete="current-password"
+                                   class="w-full h-[46px] pl-10 pr-12 text-sm"
+                                   placeholder="Nhập mật khẩu">
+                            <button type="button" id="togglePassword" aria-label="Hiện mật khẩu"
+                                    class="absolute inset-y-0 right-0 px-4 flex items-center text-chu-mo hover:text-son transition-colors">
+                                <i class="fa-regular fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Password Input -->
-                <div class="space-y-2 opacity-0 animate-fade-in-up delay-200">
-                    <div class="flex justify-between items-center">
-                        <label for="password" class="block text-xs font-semibold tracking-wider text-gray-300 uppercase">Mật khẩu</label>
-                        <a href="#" class="text-xs text-gold-400 hover:text-gold-300 transition-colors">Quên mật khẩu?</a>
+                    <div class="flex items-center justify-between gap-3 text-[13px]">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-muc">
+                            <input type="checkbox" id="nhoTenDangNhap" class="w-4 h-4 rounded">
+                            Ghi nhớ tên đăng nhập
+                        </label>
+                        <a href="#" id="quenMatKhau" class="font-bold text-son hover:text-son-sang">Quên mật khẩu?</a>
                     </div>
-                    <div class="relative group">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gold-400/70 group-focus-within:text-gold-400 transition-colors">
-                            <i class="fa-solid fa-key"></i>
-                        </span>
-                        <input type="password" id="password" required
-                               class="w-full input-luxury rounded-xl py-3.5 pl-11 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-0 text-sm"
-                               placeholder="Nhập mật khẩu...">
-                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-white transition-colors">
-                            <i class="fa-regular fa-eye" id="eyeIcon"></i>
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Submit Button -->
-                <div class="pt-4 opacity-0 animate-fade-in-up delay-300">
-                    <button type="submit" class="w-full btn-gold-shine animate-shine font-bold py-4 px-6 rounded-xl flex items-center justify-center space-x-2 text-sm tracking-widest uppercase">
-                        <span>Đăng Nhập</span>
-                        <i class="fa-solid fa-arrow-right-to-bracket ml-2"></i>
+                    <button type="submit" class="ss-nut w-full rounded-xl py-3 text-[15px] font-bold flex items-center justify-center gap-2">
+                        <span>Đăng nhập</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </button>
-                </div>
-            </form>
+                </form>
 
-            <!-- Footer Info -->
-            <div class="mt-10 text-center opacity-0 animate-fade-in-up delay-400">
-                <p class="text-[10px] text-gray-400/60 uppercase tracking-widest font-serif">
-                    &copy; 2026 Royal Restaurant
-                </p>
-                <p class="text-[10px] text-gray-400/40 mt-1">
-                    Excellence in every detail
+                <p class="mt-6 text-center text-xs text-chu-mo">
+                    Đặt bàn cho khách? <a href="/" class="font-bold text-son hover:text-son-sang">Về trang giới thiệu ›</a>
                 </p>
             </div>
-        </div>
+            <p class="relative mt-6 text-[11px] uppercase tracking-[.16em] text-chu-mo">&copy; 2026 Royal Restaurant</p>
+        </section>
     </div>
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="js/config.js?v=1.2"></script>
-    <script src="js/login.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Tạo hiệu ứng hạt bụi (Particles) bay lơ lửng
-            function createParticles() {
-                const container = document.getElementById('particles');
-                const particleCount = 20; // Số lượng hạt
-
-                for (let i = 0; i < particleCount; i++) {
-                    const particle = document.createElement('div');
-                    particle.classList.add('particle');
-                    
-                    // Random kích thước, vị trí và thời gian bay
-                    const size = Math.random() * 4 + 1; // 1px đến 5px
-                    const posX = Math.random() * 100; // 0% đến 100% chiều ngang
-                    const duration = Math.random() * 10 + 10; // 10s đến 20s
-                    const delay = Math.random() * 10; // 0s đến 10s delay
-
-                    particle.style.width = `${size}px`;
-                    particle.style.height = `${size}px`;
-                    particle.style.left = `${posX}%`;
-                    particle.style.animationDuration = `${duration}s`;
-                    particle.style.animationDelay = `${delay}s`;
-
-                    container.appendChild(particle);
-                }
-            }
-
-            createParticles();
-        });
-    </script>
+    <script src="js/login.js?v=2"></script>
 </body>
 </html>

@@ -101,20 +101,20 @@ export class TableScreen extends CrudScreen {
             // bảo trì > đang có khách > trống
             let mauVien, nhan, mauIcon, mauChu;
             if (!hoatDong) {
-                mauVien = 'border-slate-600/40 bg-slate-700/10';
+                mauVien = 'border-slate-600/40 bg-kem-dam/60';
                 nhan    = '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-600/20 text-slate-400 border border-slate-500/30"><i class="fa-solid fa-screwdriver-wrench mr-1"></i>Bảo trì</span>';
                 mauIcon = 'text-slate-500/50';
                 mauChu  = 'text-slate-500';
             } else if (dangDung) {
-                mauVien = 'border-red-500/40 bg-red-500/5';
+                mauVien = 'border-red-500/50 bg-nga ring-1 ring-red-500/40';
                 nhan    = '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">Đang dùng</span>';
                 mauIcon = 'text-red-400/70';
-                mauChu  = 'text-white light:text-royal-900';
+                mauChu  = 'text-son-dam';
             } else {
-                mauVien = 'border-emerald-500/30 bg-emerald-500/5';
+                mauVien = 'border-gold-400/30 bg-nga';
                 nhan    = '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Trống</span>';
                 mauIcon = 'text-emerald-400/70';
-                mauChu  = 'text-white light:text-royal-900';
+                mauChu  = 'text-son-dam';
             }
 
             // Bàn đã có đơn hay phiếu đặt thì máy chủ không cho xóa (giữ lịch

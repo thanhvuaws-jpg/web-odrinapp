@@ -19,28 +19,12 @@ $(document).ready(function() {
         }
     }
 
-    // Theme Switcher Logic
-    let currentTheme = localStorage.getItem("theme") || "dark";
-    applyTheme(currentTheme);
-
-    $("#themeToggle").click(function() {
-        currentTheme = currentTheme === "dark" ? "light" : "dark";
-        localStorage.setItem("theme", currentTheme);
-        applyTheme(currentTheme);
-        
-        // Vẽ lại biểu đồ khi chuyển chủ đề để đổi màu chữ trục
-        if (activeTab === 'overview') {
-            loadOverviewStats();
-        }
-    });
-
-    function applyTheme(theme) {
-        if (theme === "light") {
-            $("html").removeClass("dark").addClass("light");
-        } else {
-            $("html").addClass("dark").removeClass("light");
-        }
-    }
+    // Giao diện Sơn Son chỉ có một bản sáng, giống app. Nút chuyển sáng/tối
+    // đã bỏ; class "dark" trên <html> phải luôn còn vì bảng màu Tailwind
+    // (js/son-son-mau.js) được đảo dựa trên các biến thể dark:. Ai từng lưu
+    // theme = "light" ở bản cũ thì xóa đi để khỏi lệch.
+    localStorage.removeItem("theme");
+    $("html").addClass("dark son-son").removeClass("light");
 
     // Helper kiểm tra màn hình tối để tạo popup đẹp phù hợp
     function getSwalBg() {
@@ -63,6 +47,16 @@ $(document).ready(function() {
     }
 
     $("#adminName").text(hoten);
+    $("#adminVietTat").text(vietTat(hoten));
+
+    /** Hai chữ cái đầu của họ tên để vẽ vào huy hiệu tròn ("Quản lý sân thử" → "QT"). */
+    function vietTat(ten) {
+        const chu = String(ten || '').trim().split(/\s+/).filter(Boolean);
+        if (chu.length === 0) return 'QL';
+        const dau = chu[0][0];
+        const cuoi = chu.length > 1 ? chu[chu.length - 1][0] : '';
+        return (dau + cuoi).toUpperCase();
+    }
 
     let socket = null;
     let sessionCheckInterval = null;
@@ -80,7 +74,7 @@ $(document).ready(function() {
             month: '2-digit',
             year: 'numeric'
         });
-        $("#liveTime").html(`<i class="fa-regular fa-clock mr-1"></i>${dateStr} - ${timeStr}`);
+        $("#liveTime").html(`<i class="fa-regular fa-clock"></i>${dateStr} · ${timeStr}`);
     }
     updateClock();
     setInterval(updateClock, 1000);
@@ -274,14 +268,13 @@ $(document).ready(function() {
             revenueChart.destroy();
         }
 
-        // Tạo gradient đổ màu dưới nét vẽ line biểu đồ cực đẹp
+        // Nét son, vùng dưới đổ vàng nhạt dần — cùng màu biểu đồ trong app
         const gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
-        gradientFill.addColorStop(0, 'rgba(212, 175, 55, 0.35)');
-        gradientFill.addColorStop(1, 'rgba(212, 175, 55, 0.00)');
+        gradientFill.addColorStop(0, 'rgba(217, 164, 65, 0.38)');
+        gradientFill.addColorStop(1, 'rgba(217, 164, 65, 0.00)');
 
-        const isDark = $("html").hasClass("dark");
-        const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
-        const textColor = isDark ? '#94a3b8' : '#475569';
+        const gridColor = 'rgba(168, 119, 31, 0.14)';
+        const textColor = '#7A6553';
         
         revenueChart = new Chart(ctx, {
             type: 'line',
@@ -290,13 +283,13 @@ $(document).ready(function() {
                 datasets: [{
                     label: 'Doanh thu (VNĐ)',
                     data: data,
-                    borderColor: '#d4af37',
+                    borderColor: '#8E1B17',
                     backgroundColor: gradientFill,
                     borderWidth: 3.5,
                     tension: 0.35,
                     fill: true,
-                    pointBackgroundColor: '#d4af37',
-                    pointBorderColor: isDark ? '#0b0f19' : '#ffffff',
+                    pointBackgroundColor: '#D9A441',
+                    pointBorderColor: '#8E1B17',
                     pointBorderWidth: 1.5,
                     pointRadius: 5,
                     pointHoverRadius: 7
@@ -308,6 +301,20 @@ $(document).ready(function() {
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1F120D',
+                        borderColor: 'rgba(217, 164, 65, 0.6)',
+                        borderWidth: 1,
+                        titleColor: '#FFE3A0',
+                        bodyColor: '#F7EEDD',
+                        titleFont: { family: 'Be Vietnam Pro', weight: '700' },
+                        bodyFont: { family: 'Be Vietnam Pro' },
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: (c) => Number(c.parsed.y).toLocaleString('vi-VN') + 'đ'
+                        }
                     }
                 },
                 scales: {
@@ -317,8 +324,12 @@ $(document).ready(function() {
                         },
                         ticks: {
                             color: textColor,
-                            font: { family: 'Outfit' },
+                            font: { family: 'Be Vietnam Pro' },
+                            // Rút gọn "18.000.000đ" thành "18 tr" — nhãn đầy đủ
+                            // quá dài, cột trục bị cắt mất chữ số đầu.
                             callback: function(value) {
+                                if (Math.abs(value) >= 1e6) return (value / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr';
+                                if (Math.abs(value) >= 1e3) return (value / 1e3).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + 'k';
                                 return value.toLocaleString('vi-VN') + 'đ';
                             }
                         }
@@ -328,7 +339,7 @@ $(document).ready(function() {
                             color: gridColor
                         },
                         ticks: {
-                            font: { family: 'Outfit' },
+                            font: { family: 'Be Vietnam Pro' },
                             color: textColor
                         }
                     }
@@ -749,8 +760,8 @@ $(document).ready(function() {
         const container = $('#notifList');
         if (notifList.length === 0) {
             container.html(`
-                <div id="notifEmpty" class="flex flex-col items-center justify-center py-8 text-gray-500">
-                    <i class="fa-regular fa-bell-slash text-2xl mb-2 opacity-40"></i>
+                <div id="notifEmpty" class="flex flex-col items-center justify-center py-8 text-chu-mo">
+                    <img src="img/son-son/hh_chat_mo.webp" alt="" class="w-12 h-12 mb-2 opacity-70">
                     <p class="text-xs">Chưa có thông báo nào</p>
                 </div>
             `);

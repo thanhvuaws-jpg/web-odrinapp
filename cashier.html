@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<!-- Class "dark" giữ lại có chủ ý: xem chú thích trong js/son-son-mau.js -->
+<html lang="vi" class="dark son-son">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Royal Cashier Pro | Hệ thống Thu ngân Cao cấp</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Baloo 2 cho tiêu đề, Be Vietnam Pro cho chữ — cùng bộ với app -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/son-son-mau.js?v=1"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -15,29 +19,24 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
-                    colors: {
+                    fontFamily: SON_SON_FONT,
+                    colors: Object.assign({}, SON_SON_MAU, {
+                        // royal-gold là màu nhấn của trang thu ngân cũ → son;
+                        // royal-900 vừa làm chữ trên nút đặc vừa làm nền phụ → vàng nhạt
                         royal: {
-                            900: '#0f172a', // Deep slate
-                            800: '#1e293b',
-                            700: '#334155',
-                            gold: '#fbbf24', // Amber 400
-                            gold_dark: '#d97706', // Amber 600
-                            glow: 'rgba(251, 191, 36, 0.5)'
+                            900: '#FFE3A0',
+                            800: '#F3E9D6',
+                            700: '#DCCDB3',
+                            gold: '#8E1B17',
+                            gold_dark: '#5E0E0C',
+                            glow: 'rgba(217, 164, 65, 0.45)'
                         }
-                    },
+                    }),
                     animation: {
-                        'blob': 'blob 7s infinite',
                         'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
-                        blob: {
-                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
-                        },
                         fadeInUp: {
                             '0%': { opacity: '0', transform: 'translateY(20px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -47,66 +46,33 @@
             }
         }
     </script>
-
     <style>
-        /* Base styles */
-        body {
-            background-color: #050505;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(15, 23, 42, 1) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(30, 27, 75, 1) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(23, 37, 84, 1) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(17, 24, 39, 1) 0px, transparent 50%);
-            background-attachment: fixed;
-            overflow: hidden;
-        }
+        body { overflow: hidden; }
         @media (max-width: 1023px) {
             body { overflow: auto; }
         }
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(251, 191, 36, 0.5); }
-
-        /* Glassmorphism Utilities */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-        
-        .glass-button {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        .glass-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(251, 191, 36, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.1);
-        }
-
         /* Interactive Order Cards */
-        .order-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        html.son-son .order-card {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, border-color 0.2s ease;
             transform-origin: center;
         }
-        .order-card:hover {
-            transform: scale(1.02) translateX(5px);
-            background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-            border-color: rgba(255, 255, 255, 0.2);
-            box-shadow: -5px 10px 20px rgba(0,0,0,0.4);
+        html.son-son .order-card:hover {
+            transform: translateX(4px);
+            background: #FFF8EA;
+            border-color: var(--vang-dam);
         }
-        .order-card.active {
-            border-left: 4px solid #fbbf24;
-            background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, rgba(255,255,255,0.02) 100%);
-            border-color: rgba(251, 191, 36, 0.3);
+        html.son-son .order-card.active {
+            border-left: 4px solid var(--vang);
+            background: linear-gradient(90deg, #FFF1D2 0%, var(--nga) 100%);
+            border-color: var(--vang-dam);
+            box-shadow: 0 0 0 3px rgba(217, 164, 65, .2), var(--bong);
+        }
+
+        /* Thanh chọn tab: ô ngà trượt trên nền kem đậm */
+        #tabIndicator {
+            background: var(--nga); border: 1px solid var(--vien);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, .8) inset, 0 4px 10px -6px rgba(94, 14, 12, .45);
         }
 
         /* Staggered Animation for list items */
@@ -139,7 +105,7 @@
             0%   { opacity: 0; transform: translateY(20px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        
+
         /* Smooth transition for detail pane */
         #detailsContent { transition: opacity 0.4s ease, transform 0.4s ease; }
         #detailsContent.show { opacity: 1; transform: translateY(0); }
@@ -148,26 +114,20 @@
         #detailsEmptyState { transition: opacity 0.4s ease; }
         #detailsEmptyState.hide { opacity: 0; pointer-events: none; }
 
-        /* Text Gradients */
-        .text-gradient-gold {
-            background: linear-gradient(to right, #fbbf24, #f59e0b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Background Animated Orbs */
-        .bg-orb {
-            position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.4;
+        /* Khối tổng tiền: dải sơn son như thanh "Tổng" trong app */
+        .tong-son {
+            background: linear-gradient(90deg, var(--son-dam), var(--son));
+            border: 1px solid var(--son-dam); border-bottom: 2px solid var(--vang);
+            color: var(--kem);
         }
 
         /* Print Layout (Hidden on screen) */
         @media print {
             body * { visibility: hidden; }
-            #printInvoice, #printInvoice * { 
-                visibility: visible !important; 
-                color: #000 !important; 
-                background: transparent !important; 
+            #printInvoice, #printInvoice * {
+                visibility: visible !important;
+                color: #000 !important;
+                background: transparent !important;
             }
             #printInvoice {
                 position: absolute; left: 0; top: 0; width: 80mm; background: #fff !important; color: #000 !important;
@@ -180,120 +140,59 @@
             .print-line { border-top: 1px dashed #000; margin: 5px 0; }
             table { width: 100%; border-collapse: collapse; }
             th, td { padding: 3px 0; }
-        }
-
-        /* --- Ambient Background Effects --- */
-        .ambient-background {
-            position: fixed; inset: 0; z-index: -1;
-            pointer-events: none; overflow: hidden;
-        }
-        .glow-orb {
-            position: absolute; border-radius: 50%;
-            filter: blur(130px); opacity: 0.35;
-            animation: orbFloat 22s ease-in-out infinite alternate;
-        }
-        .orb-1 {
-            width: 600px; height: 600px; top: -100px; left: -100px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.45) 0%, rgba(170, 136, 17, 0.15) 60%, transparent 100%);
-            animation-duration: 22s;
-        }
-        .orb-2 {
-            width: 500px; height: 500px; top: 40%; right: -150px;
-            background: radial-gradient(circle, rgba(243, 229, 171, 0.35) 0%, rgba(168, 85, 247, 0.15) 70%, transparent 100%);
-            animation-duration: 18s; animation-delay: -6s;
-        }
-        .orb-3 {
-            width: 700px; height: 700px; bottom: -200px; left: 20%;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(16, 185, 129, 0.15) 65%, transparent 100%);
-            animation-duration: 26s; animation-delay: -12s;
-        }
-        @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(60px, 80px) scale(1.15); }
-            100% { transform: translate(-40px, 40px) scale(0.92); }
-        }
-        .particles-container { position: absolute; inset: 0; }
-        .gold-particle {
-            position: absolute; border-radius: 50%;
-            background: radial-gradient(circle, #ffffff 0%, #F3E5AB 40%, #D4AF37 80%, transparent 100%);
-            box-shadow: 0 0 12px rgba(212, 175, 55, 0.9), 0 0 24px rgba(243, 229, 171, 0.6);
-            animation: particleRise linear infinite;
-        }
-        @keyframes particleRise {
-            0% { transform: translateY(105vh) scale(0.2) rotate(0deg); opacity: 0; }
-            15% { opacity: 0.85; }
-            85% { opacity: 0.7; }
-            100% { transform: translateY(-10vh) scale(1.3) rotate(360deg); opacity: 0; }
+            /* Bảng màu Sơn Son tô nền cho tiêu đề bảng — hóa đơn in phải trắng đen */
+            #printInvoice th { background: transparent !important; text-transform: none; letter-spacing: 0; font-size: 12px; }
         }
     </style>
+    <link rel="stylesheet" href="css/son-son.css?v=1">
 </head>
-<body class="text-slate-200 h-screen flex flex-col font-sans selection:bg-royal-gold selection:text-royal-900">
+<body class="text-slate-200 h-screen flex flex-col font-sans">
 
-    <!-- AMBIENT GLOW & GOLDEN DUST BACKGROUND -->
-    <div class="ambient-background">
-        <div class="glow-orb orb-1"></div>
-        <div class="glow-orb orb-2"></div>
-        <div class="glow-orb orb-3"></div>
-        <div id="goldParticles" class="particles-container"></div>
-    </div>
-
-    <div class="bg-orb w-96 h-96 bg-purple-600 top-[-10%] left-[-10%] animate-blob"></div>
-    <div class="bg-orb w-96 h-96 bg-blue-600 top-[20%] right-[-10%] animate-blob animation-delay-2000"></div>
-    <div class="bg-orb w-80 h-80 bg-royal-gold bottom-[-20%] left-[20%] animate-blob animation-delay-4000 opacity-20"></div>
-
-    <header class="glass-panel sticky top-0 z-40 w-full px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-            <div class="relative group">
-                <div class="absolute inset-0 bg-royal-gold rounded-xl blur opacity-40 group-hover:opacity-75 transition duration-500"></div>
-                <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-royal-800 to-royal-900 border border-white/10 flex items-center justify-center">
-                    <i class="fa-solid fa-crown text-2xl text-gradient-gold"></i>
-                </div>
-            </div>
+    <!-- Thanh đầu là tấm hoành, cùng kiểu với trang quản trị -->
+    <header class="ss-dau sticky top-0 z-40 w-full px-4 sm:px-6 h-[76px] flex items-center justify-between shrink-0">
+        <div class="ss-logo">
+            <img src="img/son-son/logo.webp" alt="">
             <div>
-                <h1 class="text-2xl font-black tracking-tight text-white uppercase drop-shadow-md">
-                    Royal <span class="text-royal-gold">POS</span>
-                </h1>
-                <p class="text-royal-gold/70 text-xs font-medium tracking-widest uppercase">Premium Cashier System</p>
+                <b>ROYAL</b>
+                <small>Thu ngân</small>
             </div>
         </div>
 
-        <div class="flex items-center space-x-6">
+        <div class="flex items-center gap-3 sm:gap-4">
             <!-- Clock -->
-            <div class="text-right hidden md:block border-r border-white/10 pr-6">
-                <div id="liveClock" class="text-lg font-black text-white tracking-wider drop-shadow-md">00:00:00</div>
-                <div id="liveDate" class="text-xs text-slate-400 font-medium uppercase tracking-wider">--/--/----</div>
+            <div class="ss-chip hidden md:inline-flex px-4 py-1.5 flex-col !items-end !gap-0 !rounded-2xl">
+                <div id="liveClock" class="text-base font-bold tracking-wide leading-tight" style="font-variant-numeric: tabular-nums">00:00:00</div>
+                <div id="liveDate" class="text-[11px] font-medium text-kem leading-tight opacity-90">--/--/----</div>
             </div>
 
             <!-- Profile Info -->
-            <div class="flex items-center space-x-4">
-                <div class="text-right hidden sm:block">
-                    <div class="text-sm font-bold text-white" id="cashierName">Thu ngân</div>
-                    <div class="text-xs text-emerald-400 font-medium flex items-center justify-end space-x-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>Đang trực quầy</span>
-                    </div>
+            <div class="ss-nguoi ss-chip !mt-0 !justify-start p-1 sm:pr-4">
+                <span id="cashierVietTat" class="ss-viet-tat !w-8 !h-8 !text-xs">TN</span>
+                <div class="hidden sm:block min-w-0">
+                    <b id="cashierName">Thu ngân</b>
+                    <small><i></i>Đang trực quầy</small>
                 </div>
-                <button id="logoutBtn" class="glass-button w-12 h-12 rounded-xl text-white/70 hover:text-red-400 hover:border-red-500/30 group relative">
-                    <i class="fa-solid fa-power-off text-lg group-hover:scale-110 transition-transform"></i>
-                </button>
             </div>
+            <button id="logoutBtn" class="ss-chip inline-flex w-10 h-10" title="Đăng xuất" aria-label="Đăng xuất">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
         </div>
     </header>
 
-    <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-80px)] lg:overflow-hidden">
+    <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-76px)] lg:overflow-hidden">
         
         <!-- ================= LEFT COLUMN: QUEUE & HISTORY ================= -->
         <section class="lg:col-span-5 flex flex-col lg:h-full space-y-4 lg:overflow-hidden">
             
             <!-- Custom Tab Selector -->
-            <div class="glass-panel p-1.5 rounded-2xl flex relative overflow-hidden shrink-0">
+            <div class="glass-panel !bg-kem-dam p-1.5 rounded-2xl flex relative overflow-hidden shrink-0">
                 <!-- Active Tab Indicator (Sliding background) -->
-                <div id="tabIndicator" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(33.33%-6px)] bg-white/10 border border-white/10 rounded-xl transition-all duration-300 ease-out z-0"></div>
+                <div id="tabIndicator" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(33.33%-6px)] rounded-xl transition-all duration-300 ease-out z-0"></div>
                 
                 <button id="tabPending" class="relative z-10 flex-1 py-3 text-center text-white font-bold text-sm transition-colors duration-300 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-bell"></i>
                     <span class="hidden sm:inline">Chờ thanh toán</span>
-                    <span id="badgePending" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1 animate-pulse">0</span>
+                    <span id="badgePending" class="bg-son text-vang-sang text-[10px] font-bold px-2 py-0.5 rounded-full ml-1 animate-pulse">0</span>
                 </button>
                 <button id="tabHistory" class="relative z-10 flex-1 py-3 text-center text-slate-400 font-medium text-sm transition-colors duration-300 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-clock-rotate-left"></i>
@@ -302,7 +201,7 @@
                 <button id="tabBooking" class="relative z-10 flex-1 py-3 text-center text-slate-400 font-medium text-sm transition-colors duration-300 flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-calendar-check"></i>
                     <span class="hidden sm:inline">Đặt trước</span>
-                    <span id="badgeBooking" class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1 hidden">0</span>
+                    <span id="badgeBooking" class="bg-vang text-son-dam text-[10px] font-bold px-2 py-0.5 rounded-full ml-1 hidden">0</span>
                 </button>
             </div>
 
@@ -318,22 +217,22 @@
                         <div class="text-[10px] text-slate-400 uppercase">Chuyển khoản</div>
                         <div id="statTransfer" class="text-sm font-bold text-white">0đ</div>
                     </div>
-                    <div class="bg-royal-gold/10 rounded-xl p-2 text-center border border-royal-gold/30">
-                        <div class="text-[10px] text-royal-gold uppercase">Tổng doanh thu</div>
-                        <div id="statTotal" class="text-sm font-black text-royal-gold">0đ</div>
+                    <div class="tong-son rounded-xl p-2 text-center">
+                        <div class="text-[10px] text-kem uppercase">Tổng doanh thu</div>
+                        <div id="statTotal" class="text-sm font-black text-vang-sang">0đ</div>
                     </div>
                 </div>
 
                 <!-- Search Area -->
-                <div class="p-4 border-b border-white/5 bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
                     <div class="relative w-full">
                         <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="searchInput" class="w-full bg-slate-800/50 border border-slate-700/50 text-white rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-royal-gold/50 focus:ring-1 focus:ring-royal-gold/50 transition-all placeholder:text-slate-500" placeholder="Tìm kiếm theo mã đơn hoặc tên bàn...">
+                        <input type="text" id="searchInput" class="w-full text-white !rounded-full py-2.5 pl-12 pr-4 transition-all" placeholder="Tìm kiếm theo mã đơn hoặc tên bàn...">
                     </div>
                 </div>
 
                 <!-- Sub tabs cho Đặt trước -->
-                <div id="bookingSubTabs" class="hidden px-4 py-2 border-b border-white/5 bg-slate-900/80 flex items-center space-x-2 shrink-0">
+                <div id="bookingSubTabs" class="hidden pt-1 flex items-center space-x-2 shrink-0">
                     <button id="subTabActive" class="px-4 py-1.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-colors">Đang chờ</button>
                     <button id="subTabCompleted" class="px-4 py-1.5 rounded-full text-xs font-bold bg-transparent text-slate-500 border border-slate-700/50 hover:text-slate-300 transition-colors">Lịch sử (Đã xong / Hủy)</button>
                 </div>
@@ -346,18 +245,15 @@
         </section>
 
         <!-- ================= RIGHT COLUMN: ORDER DETAILS ================= -->
-        <section id="detailSection" class="fixed inset-0 z-50 bg-[#0f172a]/98 backdrop-blur-md translate-y-full transition-transform duration-300 ease-out lg:static lg:inset-auto lg:z-auto lg:col-span-7 lg:h-full lg:overflow-hidden lg:translate-y-0 lg:bg-transparent lg:backdrop-blur-none">
+        <section id="detailSection" class="fixed inset-0 z-50 bg-kem translate-y-full transition-transform duration-300 ease-out lg:static lg:inset-auto lg:z-auto lg:col-span-7 lg:h-full lg:overflow-hidden lg:translate-y-0 lg:bg-transparent lg:backdrop-blur-none">
             <div class="glass-panel rounded-3xl h-full flex flex-col relative overflow-hidden">
                 
                 <!-- Glow effects behind the card -->
-                <div class="absolute top-0 right-0 w-64 h-64 bg-royal-gold/5 rounded-full blur-3xl pointer-events-none"></div>
-
+                
                 <!-- Empty State -->
-                <div id="detailsEmptyState" class="absolute inset-0 flex flex-col items-center justify-center text-center z-20 bg-royal-900/40 backdrop-blur-sm">
-                    <div class="w-24 h-24 mb-6 rounded-full glass-panel flex items-center justify-center animate-bounce duration-1000">
-                        <i class="fa-solid fa-receipt text-4xl text-slate-600"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Chưa chọn đơn hàng</h3>
+                <div id="detailsEmptyState" class="absolute inset-0 flex flex-col items-center justify-center text-center z-20 bg-nga">
+                    <img src="img/son-son/hh_thu_ngan.webp" alt="" class="w-24 h-24 mb-5">
+                    <h3 class="text-2xl font-extrabold text-son-dam mb-2">Chưa chọn đơn hàng</h3>
                     <p class="text-sm text-slate-400 max-w-xs">Vui lòng chọn một đơn hàng từ danh sách bên trái để xem chi tiết và thanh toán.</p>
                 </div>
 
@@ -376,7 +272,7 @@
                     <div class="flex justify-between items-start pb-6 border-b border-white/10 shrink-0">
                         <div>
                             <div class="flex items-center space-x-3 mb-2">
-                                <h2 id="detailTableName" class="text-3xl font-black text-white tracking-tight">Bàn 00</h2>
+                                <h2 id="detailTableName" class="text-3xl font-extrabold text-son-dam tracking-tight">Bàn 00</h2>
                                 <span id="detailStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
                                     Đang phục vụ
                                 </span>
@@ -399,12 +295,12 @@
                     <!-- Items Table -->
                     <div class="flex-1 overflow-y-auto my-6 pr-2">
                         <table class="w-full text-left">
-                            <thead class="sticky top-0 bg-royal-900/90 backdrop-blur z-10">
+                            <thead class="sticky top-0 z-10">
                                 <tr>
-                                    <th class="py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-white/10">Món ăn</th>
-                                    <th class="py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-white/10 text-center w-16">SL</th>
-                                    <th class="py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-white/10 text-right w-28">Đơn giá</th>
-                                    <th class="py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-white/10 text-right w-32">Thành tiền</th>
+                                    <th class="py-3 px-2">Món ăn</th>
+                                    <th class="py-3 px-2 text-center w-16">SL</th>
+                                    <th class="py-3 px-2 text-right w-28">Đơn giá</th>
+                                    <th class="py-3 px-2 text-right w-32">Thành tiền</th>
                                 </tr>
                             </thead>
                             <tbody id="detailItemsBody" class="divide-y divide-white/5 text-sm">
@@ -414,7 +310,7 @@
                     </div>
 
                     <!-- Payment Summary & Actions -->
-                    <div class="pt-6 border-t border-white/10 bg-black/20 -mx-6 -mb-6 p-6 sm:p-8 rounded-b-3xl shrink-0">
+                    <div class="pt-6 border-t border-gold-400/30 bg-kem-dam/60 -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 p-6 sm:p-8 rounded-b-3xl shrink-0">
                         
                         <div class="space-y-3 mb-6">
                             <div class="flex justify-between items-center text-slate-400">
@@ -422,25 +318,23 @@
                                 <span id="detailSubtotal" class="font-medium text-white">0 ₫</span>
                             </div>
                             <div class="flex justify-between items-center text-slate-400">
-                                <span class="flex items-center cursor-pointer hover:text-white transition-colors" onclick="alert('Chức năng thêm VAT/Discount')">
-                                    Chiết khấu / VAT <i class="fa-solid fa-pen-to-square ml-2 text-xs"></i>
-                                </span>
-                                <span class="font-medium text-white">0 ₫</span>
+                                <span id="detailNhanGiam">Giảm giá (mã voucher)</span>
+                                <span id="detailGiamGia" class="font-medium text-white">0 ₫</span>
                             </div>
-                            <div class="flex justify-between items-center pt-3 border-t border-white/5">
-                                <span class="text-lg font-bold text-white uppercase tracking-wider">Tổng Thanh Toán</span>
-                                <span id="detailGrandTotal" class="text-4xl font-black text-gradient-gold drop-shadow-lg">0 ₫</span>
+                            <div class="tong-son flex justify-between items-center mt-1 px-4 py-3 rounded-xl">
+                                <span class="text-base font-bold uppercase tracking-wider">Tổng thanh toán</span>
+                                <span id="detailGrandTotal" class="font-serif text-3xl sm:text-4xl font-extrabold text-vang-sang">0 ₫</span>
                             </div>
                         </div>
 
                         <!-- Action Area (Changes based on status) -->
                         <div id="actionAreaPending" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <!-- Payment Method Selector -->
-                            <div class="glass-panel rounded-xl p-1.5 flex bg-black/40">
-                                <button onclick="selectPaymentMethod('cash')" id="btnPayCash" class="flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-white/10 text-white shadow-md border border-white/10">
+                            <div class="rounded-xl p-1.5 flex gap-1.5 bg-kem-dam border border-gold-400/20">
+                                <button onclick="selectPaymentMethod('cash')" id="btnPayCash" class="flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-nga text-son-dam shadow-md border border-gold-400">
                                     <i class="fa-solid fa-money-bill-wave mr-2 text-emerald-400"></i>Tiền mặt
                                 </button>
-                                <button onclick="selectPaymentMethod('transfer')" id="btnPayTransfer" class="flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white">
+                                <button onclick="selectPaymentMethod('transfer')" id="btnPayTransfer" class="flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white border border-transparent">
                                     <i class="fa-solid fa-qrcode mr-2 text-blue-400"></i>Chuyển khoản
                                 </button>
                             </div>
@@ -452,18 +346,16 @@
                             <div class="mb-3">
                                 <div class="flex items-center space-x-2">
                                     <div class="relative flex-1">
-                                        <i class="fa-solid fa-ticket absolute left-3 top-1/2 -translate-y-1/2 text-royal-gold/50 text-sm"></i>
+                                        <i class="fa-solid fa-ticket absolute left-3 top-1/2 -translate-y-1/2 text-vang-dam text-sm pointer-events-none"></i>
                                         <input id="inputMaGiamGia" type="text" maxlength="20"
                                                placeholder="Nhập mã giảm giá"
-                                               class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-9 pr-3
+                                               class="w-full !border-dashed rounded-xl py-3 pl-9 pr-3
                                                       text-white text-sm font-mono tracking-wider uppercase
-                                                      placeholder:text-slate-500 placeholder:font-sans placeholder:normal-case
-                                                      focus:outline-none focus:border-royal-gold/50 transition-colors">
+                                                      placeholder:font-sans placeholder:normal-case transition-colors">
                                     </div>
                                     <button id="btnApMa" onclick="apMaGiamGia()"
-                                            class="px-4 py-3 rounded-xl bg-royal-gold/15 border border-royal-gold/30
-                                                   text-royal-gold text-xs font-bold uppercase tracking-wide
-                                                   hover:bg-royal-gold/25 transition-colors whitespace-nowrap">
+                                            class="ss-nut-vang px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wide
+                                                   transition-colors whitespace-nowrap">
                                         Áp mã
                                     </button>
                                 </div>
@@ -471,11 +363,8 @@
                             </div>
 
                             <!-- Confirm Button -->
-                            <button onclick="confirmPayment()" class="relative group overflow-hidden rounded-xl bg-gradient-to-r from-royal-gold to-yellow-600 p-[1px]">
-                                <span class="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-all duration-300"></span>
-                                <div class="relative h-full w-full bg-gradient-to-r from-yellow-500 to-amber-600 rounded-xl flex items-center justify-center font-black text-royal-900 text-lg tracking-wide uppercase shadow-[0_0_20px_rgba(251,191,36,0.3)] group-hover:shadow-[0_0_30px_rgba(251,191,36,0.6)] transition-all">
-                                    <i class="fa-solid fa-check-double mr-2"></i> Xác Nhận Thu Tiền
-                                </div>
+                            <button onclick="confirmPayment()" class="ss-nut rounded-xl py-3 flex items-center justify-center font-extrabold text-lg tracking-wide uppercase">
+                                <i class="fa-solid fa-check-double mr-2"></i> Xác Nhận Thu Tiền
                             </button>
                         </div>
 
@@ -487,18 +376,15 @@
                                 </div>
                                 <div>
                                     <div class="font-bold text-lg">Đã thanh toán thành công</div>
-                                    <div class="text-xs text-emerald-400/70" id="completedPaymentMethodInfo">Hình thức: Tiền mặt</div>
+                                    <div class="text-xs text-emerald-400" id="completedPaymentMethodInfo">Hình thức: Tiền mặt</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Action Area Booking -->
                         <div id="actionAreaBooking" class="hidden">
-                            <button onclick="notifyStaff()" class="w-full relative group overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-[1px]">
-                                <span class="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-all duration-300"></span>
-                                <div class="relative h-full w-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl py-3 flex items-center justify-center font-black text-white text-lg tracking-wide shadow-[0_0_20px_rgba(59,130,246,0.3)] group-hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] transition-all">
-                                    <i class="fa-solid fa-bell-concierge mr-2"></i> Nhắc Nhân Viên Chuẩn Bị Bàn
-                                </div>
+                            <button onclick="notifyStaff()" class="ss-nut-vang w-full rounded-xl py-3 flex items-center justify-center font-extrabold text-lg tracking-wide">
+                                <i class="fa-solid fa-bell-concierge mr-2"></i> Nhắc Nhân Viên Chuẩn Bị Bàn
                             </button>
                         </div>
                     </div>
@@ -574,6 +460,7 @@
             handleLogout();
         } else {
             document.getElementById("cashierName").textContent = hoten;
+            document.getElementById("cashierVietTat").textContent = vietTat(hoten);
         }
 
         // --- DOM ELEMENTS ---
@@ -716,6 +603,21 @@
          * là lớp phòng vệ thứ hai: một ô hiển thị '--:--' thì vô hại, còn
          * một danh sách trắng thì làm nghiệp vụ đình trệ.
          */
+        const DAT_BAN_DA_DONG = ['completed', 'cancelled', 'overdue', 'đã kết thúc', 'đã hủy'];
+        const NHAN_DAT_BAN = {
+            pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', checked_in: 'Đã nhận bàn',
+            completed: 'Hoàn tất', cancelled: 'Đã hủy', overdue: 'Quá giờ hẹn'
+        };
+        const datBanDaDong = (t) => DAT_BAN_DA_DONG.includes(String(t || '').toLowerCase());
+        const nhanDatBan = (t) => NHAN_DAT_BAN[String(t || '').toLowerCase()] || t || 'Khách đặt trước';
+
+        /** Hai chữ cái đầu của họ tên cho huy hiệu tròn trên thanh đầu. */
+        function vietTat(ten) {
+            const chu = String(ten || '').trim().split(/\s+/).filter(Boolean);
+            if (chu.length === 0) return 'TN';
+            return (chu[0][0] + (chu.length > 1 ? chu[chu.length - 1][0] : '')).toUpperCase();
+        }
+
         function layGioPhut(chuoiThoiGian) {
             if (!chuoiThoiGian || typeof chuoiThoiGian !== 'string') return '--:--';
             const phan = chuoiThoiGian.split(' ');
@@ -753,10 +655,7 @@
                     if (bookingData.status !== "error") {
                         bookingOrders = bookingData;
                         // Đếm số đơn đang chờ
-                        const activeCount = bookingOrders.filter(o => {
-                            const t = (o.TINHTRANG || '').toLowerCase();
-                            return t !== 'completed' && t !== 'đã kết thúc' && t !== 'đã hủy';
-                        }).length;
+                        const activeCount = bookingOrders.filter(o => !datBanDaDong(o.TINHTRANG)).length;
                         
                         const badge = document.getElementById('badgeBooking');
                         badge.textContent = activeCount;
@@ -828,8 +727,7 @@
                 activeList = completedOrders;
             } else {
                 activeList = bookingOrders.filter(o => {
-                    const t = (o.TINHTRANG || '').toLowerCase();
-                    const isCompleted = (t === 'completed' || t === 'đã kết thúc' || t === 'đã hủy');
+                    const isCompleted = datBanDaDong(o.TINHTRANG);
                     return bookingSubTab === 'active' ? !isCompleted : isCompleted;
                 });
             }
@@ -857,7 +755,7 @@
             if(activeList.length === 0) {
                 elListContainer.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-10 text-slate-500 animate-fade-in-up">
-                        <i class="fa-solid fa-inbox text-3xl mb-2 opacity-50"></i>
+                        <img src="img/son-son/hh_thu_ngan_mo.webp" alt="" class="w-14 h-14 mb-2 opacity-80">
                         <p>Không có ${currentTab === 'booking' ? 'khách đặt trước' : 'đơn hàng nào'}.</p>
                     </div>`;
                 return;
@@ -892,7 +790,7 @@
                     <div class="flex items-center space-x-4">
                         ${iconHtml}
                         <div>
-                            <h4 class="text-white font-bold text-base leading-tight">${order.TENBAN}</h4>
+                            <h4 class="font-serif text-son-dam font-bold text-lg leading-tight">${order.TENBAN}</h4>
                             <div class="text-xs text-slate-400 mt-1 flex items-center space-x-2">
                                 <span>#${id}</span>
                                 <span>•</span>
@@ -902,7 +800,7 @@
                     </div>
                     <div class="text-right">
                         <div class="text-royal-gold font-black text-lg">${formatCurrency(order.TONGTIEN || 0)}</div>
-                        <div class="text-[10px] text-slate-550 uppercase">${currentTab === 'booking' ? 'Trạng thái: ' + order.TINHTRANG : 'Phục vụ: ' + order.HOTENNV}</div>
+                        <div class="text-[10px] text-slate-500 uppercase">${currentTab === 'booking' ? 'Trạng thái: ' + nhanDatBan(order.TINHTRANG) : 'Phục vụ: ' + order.HOTENNV}</div>
                     </div>
                 `;
                 
@@ -971,7 +869,7 @@
             const reqBadge = document.getElementById('customerPaymentRequest');
             
             if (currentTab === 'booking') {
-                const isCompleted = (selectedOrder.TINHTRANG || '').toLowerCase() === 'completed' || (selectedOrder.TINHTRANG || '').toLowerCase() === 'đã kết thúc' || (selectedOrder.TINHTRANG || '').toLowerCase() === 'đã hủy';
+                const isCompleted = datBanDaDong(selectedOrder.TINHTRANG);
                 
                 if (isCompleted) {
                     badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-slate-500/20 text-slate-400 border border-slate-500/30 uppercase tracking-wider';
@@ -980,13 +878,15 @@
                     badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider animate-pulse';
                     document.getElementById('actionAreaBooking').classList.remove('hidden');
                 }
-                badge.textContent = selectedOrder.TINHTRANG || 'Khách đặt trước';
+                badge.textContent = nhanDatBan(selectedOrder.TINHTRANG);
                 
                 document.getElementById('actionAreaPending').classList.add('hidden');
                 document.getElementById('actionAreaCompleted').classList.add('hidden');
                 reqBadge.classList.add('hidden');
 
                 document.getElementById('detailSubtotal').textContent = formatCurrency(0);
+                document.getElementById('detailNhanGiam').textContent = 'Giảm giá (mã voucher)';
+                document.getElementById('detailGiamGia').textContent = formatCurrency(0);
                 document.getElementById('detailGrandTotal').textContent = formatCurrency(selectedOrder.TONGTIEN || 0);
 
                 // Load chi tiết món ăn của khách đặt trước
@@ -1100,8 +1000,7 @@
                         tbody.appendChild(tr);
                     });
 
-                    document.getElementById('detailSubtotal').textContent = formatCurrency(selectedOrder.TONGTIEN);
-                    document.getElementById('detailGrandTotal').textContent = formatCurrency(selectedOrder.TONGTIEN);
+                    capNhatTongTien();
                 }
             });
         }
@@ -1182,13 +1081,15 @@
             selectedPaymentMethod = method;
             const btnCash = document.getElementById('btnPayCash');
             const btnTransfer = document.getElementById('btnPayTransfer');
-            
+            const dangChon = 'flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-nga text-son-dam shadow-md border border-gold-400';
+            const khongChon = 'flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white border border-transparent';
+
             if(method === 'cash') {
-                btnCash.className = 'flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-white/10 text-white shadow-md border border-white/10';
-                btnTransfer.className = 'flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white';
+                btnCash.className = dangChon;
+                btnTransfer.className = khongChon;
             } else {
-                btnTransfer.className = 'flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-white/10 text-white shadow-md border border-white/10';
-                btnCash.className = 'flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white';
+                btnTransfer.className = dangChon;
+                btnCash.className = khongChon;
             }
         }
 
@@ -1238,7 +1139,7 @@
                     hienKetQuaMa(
                         `✓ ${res.TEN} · giảm ${formatCurrency(tienGiamMa)}` +
                         (res.CHU_MA ? ` · của ${res.CHU_MA}` : '') +
-                        `<br><span class="text-white">Còn lại: <b class="text-royal-gold">${formatCurrency(res.CON_LAI)}</b></span>`,
+                        `<br><span class="text-white">Còn lại: <b class="text-son">${formatCurrency(res.CON_LAI)}</b></span>`,
                         true
                     );
 
@@ -1246,6 +1147,7 @@
                     // đang gõ và cái thực sự sẽ được áp.
                     $('#inputMaGiamGia').val(maDaAp).prop('disabled', true);
                     $('#btnApMa').text('Gỡ mã');
+                    capNhatTongTien();
                 },
                 error: function (xhr) {
                     $('#btnApMa').prop('disabled', false);
@@ -1262,6 +1164,33 @@
             $('#inputMaGiamGia').val('').prop('disabled', false);
             $('#btnApMa').text('Áp mã');
             $('#ketQuaMaGiamGia').addClass('hidden');
+            capNhatTongTien();
+        }
+
+        /**
+         * Ghi dòng "Giảm giá" và "Tổng thanh toán" theo mã đang áp.
+         *
+         * refreshSelectedOrderDetails() chạy lại mỗi lần có sự kiện socket;
+         * nếu nó tự ghi thẳng TONGTIEN vào ô tổng thì con số đã trừ mã sẽ
+         * nhảy về giá gốc giữa chừng, thu ngân đọc nhầm số phải thu.
+         */
+        function capNhatTongTien() {
+            // Phiếu đặt trước tự ghi số của nó trong refreshSelectedOrderDetails().
+            if (!selectedOrder || currentTab === 'booking') return;
+
+            // TONGTIEN đã trừ sẵn mã mà nhân viên/khách áp lúc gửi thanh toán
+            // (DONDAT.MACODE, TIENGIAM — xem checkout_order.php). Mã thu ngân
+            // vừa tra ở quầy (maDaAp) thì chưa trừ, máy chủ chỉ trừ khi chốt.
+            const tong    = parseFloat(selectedOrder.TONGTIEN) || 0;
+            const giamSan = parseFloat(selectedOrder.TIENGIAM) || 0;
+            const giamMoi = maDaAp ? Math.min(tienGiamMa, tong) : 0;
+            const giam    = giamSan + giamMoi;
+            const ma      = maDaAp || selectedOrder.MACODE || '';
+
+            $('#detailSubtotal').text(formatCurrency(tong + giamSan));
+            $('#detailNhanGiam').text(ma ? `Giảm giá (mã ${ma})` : 'Giảm giá (mã voucher)');
+            $('#detailGiamGia').text(giam > 0 ? '-' + formatCurrency(giam) : formatCurrency(0));
+            $('#detailGrandTotal').text(formatCurrency(Math.max(0, tong - giamMoi)));
         }
 
         function hienKetQuaMa(html, tot) {
@@ -1281,9 +1210,9 @@
                 html: `Thu tiền bàn <b>${selectedOrder.TENBAN}</b><br>` +
                       (maDaAp
                         ? `Tạm tính: <s>${formatCurrency(selectedOrder.TONGTIEN)}</s><br>` +
-                          `Mã <b>${maDaAp}</b> giảm: <b style="color:#34d399">-${formatCurrency(tienGiamMa)}</b><br>` +
-                          `Thực thu: <b style="color:#fbbf24; font-size:1.3rem">${formatCurrency(Math.max(0, selectedOrder.TONGTIEN - tienGiamMa))}</b><br>`
-                        : `Số tiền: <b style="color: #fbbf24; font-size: 1.2rem">${formatCurrency(selectedOrder.TONGTIEN)}</b><br>`) +
+                          `Mã <b>${maDaAp}</b> giảm: <b style="color:#2E6B57">-${formatCurrency(tienGiamMa)}</b><br>` +
+                          `Thực thu: <b style="color:#8E1B17; font-size:1.3rem">${formatCurrency(Math.max(0, selectedOrder.TONGTIEN - tienGiamMa))}</b><br>`
+                        : `Số tiền: <b style="color:#8E1B17; font-size: 1.2rem">${formatCurrency(selectedOrder.TONGTIEN)}</b><br>`) +
                       `Hình thức: <b>${methodText}</b>`,
                 icon: 'question',
                 background: '#1e293b',
@@ -1293,7 +1222,7 @@
                 cancelButtonColor: '#475569',
                 confirmButtonText: '<i class="fa-solid fa-check"></i> Đã Thu Tiền',
                 cancelButtonText: 'Hủy',
-                customClass: { popup: 'border border-white/10 rounded-2xl' }
+                customClass: { popup: 'rounded-2xl' }
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Show loading popup
@@ -1336,7 +1265,7 @@
                                     cancelButtonColor: '#475569',
                                     confirmButtonText: '<i class="fa-solid fa-print"></i> Có, In hóa đơn',
                                     cancelButtonText: 'Không cần',
-                                    customClass: { popup: 'border border-white/10 rounded-2xl' }
+                                    customClass: { popup: 'rounded-2xl' }
                                 }).then((printChoice) => {
                                     if (printChoice.isConfirmed) {
                                         printOrder();
@@ -1485,6 +1414,6 @@
         initGoldParticles();
     </script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="js/music-player.js?v=2.0"></script>
+    <script src="js/music-player.js?v=2.1"></script>
 </body>
 </html>
